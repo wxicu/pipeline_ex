@@ -8,13 +8,14 @@ nextflow.enable.dsl=2
     Available parameter:
 	--bam <bam_file> 
 	--vcf <vcf_file>
+	--field <GT or GP or PL>
 	
 
 */
 
 
-params.bam = "/home/xic/data/jurkat_293t_downsampled_n500_full_bam.bam"
-params.vcf = "/home/xic/data/jurkat_293t_exons_only.vcf"
+params.bam = "data/jurkat_293t_downsampled_n500_full_bam.bam"
+params.vcf = "data/jurkat_293t_exons_only.vcf"
 params.field = "GT"
 
 process demuxlet{
@@ -25,14 +26,14 @@ process demuxlet{
 
     script:
     """
-    demuxlet --sam ${input_bam} --vcf ${input_vcf} --field ${input_field} --out /home/xic/data/demux
+    demuxlet --sam ${input_bam} --vcf ${input_vcf} --field ${input_field} --out data/demux
     """
 }
 
 workflow runDemuxlet{
     input_bam = Channel.fromPath(params.bam)
-	input_vcf = Channel.fromPath(params.vcf)
-	input_field = channel.value(params.field)
+    input_vcf = Channel.fromPath(params.vcf)
+    input_field = channel.value(params.field)
 	
     demuxlet(input_bam,input_vcf,input_field)
     	
