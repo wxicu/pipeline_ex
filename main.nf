@@ -14,10 +14,6 @@ nextflow.enable.dsl=2
 */
 
 
-params.bam = "data/jurkat_293t_downsampled_n500_full_bam.bam"
-params.vcf = "data/jurkat_293t_exons_only.vcf"
-params.field = "GT"
-
 process demuxlet{
     input:
 	path input_bam
