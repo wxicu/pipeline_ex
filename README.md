@@ -10,4 +10,4 @@ nextflow.congif:
 
 Dockerfile: docker image containing demuxlet
 
-sing_demuxlet.sif: sigularity image containing demuxlet
+sing_demuxlet.sif: singularity image containing demuxlet
