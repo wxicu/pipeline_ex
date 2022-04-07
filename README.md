@@ -3,6 +3,7 @@ pipeline exercise with nextflow
 
 main.nf:
   1. demuxlet
+
 nextflow.congif:
   1. parameter info
   2. docker
