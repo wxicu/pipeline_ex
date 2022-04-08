@@ -14,11 +14,3 @@ nextflow.config:
 Dockerfile: 
   1. use Dockerfile to create a docker image containing demuxlet
   2. the image now is also available in the docker hub
-
-<<<<<<< HEAD
-sing_demuxlet.sif: sigularity image containing demuxlet
-=======
-sing_demuxlet.sif: 
-  1. singularity image containing demuxlet (upload failure, try again later, maybe a little bit large)
-  2. can use dockerfile from the docker hub directly
->>>>>>> 73ea4777bb1f7a7ccf4058bf3ea83c5c90b21ce9
