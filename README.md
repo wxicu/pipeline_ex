@@ -14,3 +14,7 @@ nextflow.config:
 Dockerfile: 
   1. use Dockerfile to create a docker image containing demuxlet
   2. the image now is also available in the docker hub
+  
+Singularity:
+  1. sif upload failure, try again later
+  2. can also use docker image in docker hub directly
