@@ -11,9 +11,12 @@ nextflow.config:
   4. conda
   5. use profile parameter to switch between different containers
 
-Dockerfile: 
-  1. use Dockerfile to create a docker image containing demuxlet
-  2. the image now is also available in the docker hub
+Dockerfile_old: 
+  1. use Dockerfile to create a docker image containing old-version demuxlet 
+ 
+Dockerfile_new: 
+  1. use Dockerfile to create a docker image containing popscle as well as new-version demuxlet 
+  2. available from the github 
   
 Singularity:
   1. sif upload failure, try again later
