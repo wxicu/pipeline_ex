@@ -4,7 +4,7 @@ nextflow.enable.dsl=2
 
 /*  
     Usage:
-	nextflow run pip.nf 
+	nextflow run main.nf 
     Available parameter:
 	--bam <bam_file> 
 	--vcf <vcf_file>
@@ -22,7 +22,7 @@ process demuxlet{
 
     script:
     """
-    demuxlet --sam ${input_bam} --vcf ${input_vcf} --field ${input_field} --out data/demux
+    popscle demuxlet --sam ${input_bam} --vcf ${input_vcf} --field ${input_field} --out output/demux
     """
 }
 
