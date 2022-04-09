@@ -2,7 +2,7 @@
 pipeline exercise with nextflow 
 
 main.nf:
-  1. demuxlet
+  1. demuxlet v2
 
 nextflow.config:
   1. parameter info
