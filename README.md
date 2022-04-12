@@ -1,23 +1,16 @@
 # pipeline_ex
 pipeline exercise with nextflow 
 
+available dockerfile:
+  1. docker image: demuxlet v1 and demuxlet v2
+  2. docker conda: conda env with demuxlet v2
+
 main.nf:
   1. demuxlet v2
+  2. souporcell (under construction)
+  3. a simple analysis
 
 nextflow.config:
   1. parameter info
-  2. docker
-  3. singularity
-  4. conda
-  5. use profile parameter to switch between different containers
-
-Dockerfile_old: 
-  1. use Dockerfile to create a docker image containing old-version demuxlet 
+  2. container profile switching among docker, singularity, conda
  
-Dockerfile_new: 
-  1. use Dockerfile to create a docker image containing popscle as well as new-version demuxlet 
-  2. available from the github 
-  
-Singularity:
-  1. sif upload failure, try again later
-  2. can also use docker image in docker hub directly
