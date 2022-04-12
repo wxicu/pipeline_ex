@@ -1,8 +1,0 @@
-name: myenv
-channels:
-  - conda-forge
-  - bioconda
-  - defaults
-dependencies:
-  - docker = 20.10.9
-  # - demuxlet=1.0
