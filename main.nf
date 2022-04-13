@@ -12,6 +12,8 @@ nextflow.enable.dsl=2
 	--demux_tool <demuxlet or souporcell>
         --outdir <path>
 
+container "${ params.demux_tool == 'demuxlet' ? 'popscle' : 'sourporcell' }"
+
 */
 
 
@@ -65,13 +67,16 @@ workflow demultiplex{
 	    input_field = channel.value(params.field)
 
 	    demuxlet(input_bam,input_vcf,input_field)
+	    ana_demuxlet(demuxlet.out)
+	
+	    
 	    
     	    
    }
   
    else if (params.demux_tool == "sourporcell"){
 
-		#under construction
+
 
 
 
