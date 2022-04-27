@@ -326,6 +326,40 @@
     Analysis
   </a>
   
+    <nav class="md-nav" aria-label="Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tool_resulttsv" class="md-nav__link">
+    tool_result.tsv
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tool_result_detailtsv" class="md-nav__link">
+    tool_result_detail.tsv
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tool_assignmenttsv" class="md-nav__link">
+    tool_assignment.tsv
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tool_trialtsv" class="md-nav__link">
+    tool_trial.tsv
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -373,7 +407,7 @@
   <h1>Usage docs</h1>
 
 <h2 id="usage">Usage</h2>
-<h3 id="input-data">Input data</h3>
+<h3 id="input-data"><strong>Input data</strong></h3>
 <p>The pipeline offers different demultiplexing tools, which have different requirements of input data.</p>
 <h4 id="demuxlet">Demuxlet</h4>
 <p>It uses pileup files and external genotyping data as input. Therefore, demuxlet requires the following input:  </p>
@@ -400,7 +434,147 @@
 <li>standard VCF file with variants by cells  </li>
 </ul>
 <p>So you can run Vireo either with a cell VCF file or with two sparse matrices AD and DP.</p>
-<h3 id="analysis">Analysis</h3>
+<hr />
+<h3 id="analysis"><strong>Analysis</strong></h3>
+<p>The demultiplexing step is followed by an analysis. There are 4 <code>tsv</code> output files in total.</p>
+<h4 id="tool_resulttsv">tool_result.tsv</h4>
+<table>
+<thead>
+<tr>
+<th align="center">Trial</th>
+<th align="center">singlets</th>
+<th align="center">doublets</th>
+<th align="center">ambigous/unassigned</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">Tool Trial 1</td>
+<td align="center">498</td>
+<td align="center">2</td>
+<td align="center">0</td>
+</tr>
+<tr>
+<td align="center">Tool Trial 2</td>
+<td align="center">499</td>
+<td align="center">1</td>
+<td align="center">0</td>
+</tr>
+<tr>
+<td align="center">Tool Trial ...</td>
+<td align="center">...</td>
+<td align="center">...</td>
+<td align="center">...</td>
+</tr>
+</tbody>
+</table>
+<h4 id="tool_result_detailtsv">tool_result_detail.tsv</h4>
+<table>
+<thead>
+<tr>
+<th align="center">Trial</th>
+<th align="center">donor 1</th>
+<th align="center">donor 2</th>
+<th align="center">donor ...</th>
+<th align="center">doublet</th>
+<th align="center">unassigned</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">Tool Trial 1</td>
+<td align="center">242</td>
+<td align="center">252</td>
+<td align="center">...</td>
+<td align="center">6</td>
+<td align="center">0</td>
+</tr>
+<tr>
+<td align="center">Tool Trial 2</td>
+<td align="center">241</td>
+<td align="center">253</td>
+<td align="center">...</td>
+<td align="center">5</td>
+<td align="center">1</td>
+</tr>
+<tr>
+<td align="center">Tool Trial ...</td>
+<td align="center">...</td>
+<td align="center">...</td>
+<td align="center">...</td>
+<td align="center">...</td>
+<td align="center">...</td>
+</tr>
+</tbody>
+</table>
+<h4 id="tool_assignmenttsv">tool_assignment.tsv</h4>
+<table>
+<thead>
+<tr>
+<th align="center">barcode</th>
+<th align="center">Tool Trial 1</th>
+<th align="center">Tool Trial 2</th>
+<th align="center">Tool Trial ...</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">AAACGCTGAAGATG-1</td>
+<td align="center">donor 1</td>
+<td align="center">donor 1</td>
+<td align="center">donor 1</td>
+</tr>
+<tr>
+<td align="center">AAAGATCTGCGTTA-1</td>
+<td align="center">donor 2</td>
+<td align="center">donor 2</td>
+<td align="center">donor 1</td>
+</tr>
+<tr>
+<td align="center">...</td>
+<td align="center">...</td>
+<td align="center">...</td>
+<td align="center">...</td>
+</tr>
+</tbody>
+</table>
+<h4 id="tool_trialtsv">tool_trial.tsv</h4>
+<table>
+<thead>
+<tr>
+<th align="center">Parameter</th>
+<th align="center">Tool Trial 1</th>
+<th align="center">Tool Trial 2</th>
+<th align="center">Tool Trial ...</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">threads</td>
+<td align="center">2</td>
+<td align="center">3</td>
+<td align="center">...</td>
+</tr>
+<tr>
+<td align="center">clusters</td>
+<td align="center">2</td>
+<td align="center">2</td>
+<td align="center">...</td>
+</tr>
+<tr>
+<td align="center">ploidy</td>
+<td align="center">2</td>
+<td align="center">2</td>
+<td align="center">...</td>
+</tr>
+<tr>
+<td align="center">...</td>
+<td align="center">...</td>
+<td align="center">...</td>
+<td align="center">...</td>
+</tr>
+</tbody>
+</table>
 
               
             </article>
