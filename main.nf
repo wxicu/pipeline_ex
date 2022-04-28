@@ -54,9 +54,9 @@ process demuxlet {
 
     input:
 	file sam
-    each tag_group 
-    each tag_UMI
-    
+	each tag_group 
+	each tag_UMI
+
 	each plp
 
 	file vcf 
@@ -92,46 +92,46 @@ process demuxlet {
 
     script:
 	
-    def samfile = "--sam $sam"
-    def taggroup = tag_group != 'False' ? "--tag-group ${tag_group}" : ''
-    def tagUMI = tag_UMI != 'False' ? "--tag-UMI ${tag_UMI}" : ''
-    def plpfile = plp != 'no_plp' ? "--plp $plp" : ''
-    def vcffile = "--vcf $vcf"
-    def fieldinfo = "--field $field"
-    def genoerror_off = "--geno-error-offset ${geno_error_offset}"
-    def genoerror_cof = "--geno-error-coeff ${geno_error_coeff}"
-    def r2info = "--r2-info ${r2_info}"
-    def minmac = "--min-mac ${min_mac}"
-    def mincallrate = "--min-callrate ${min_callrate}"	
-    def smlist = sm != 'False' ? "--sm $sm" : ''
-    def sm_list_file = sm_list != 'no_sm_list' ? "--sm-list ${sm_list}" : ''
-    def alpha_value = alpha_list.replaceAll(/,/, " --alpha ")
-    def doubletprior = "--doublet-prior ${doublet_prior}"		
-    def samverbose = "--sam-verbose ${sam_verbose}"
-    def vcfverbose = "--vcf-verbose ${vcf_verbose}"
-    def capBQ = "--cap-BQ ${cap_BQ}"
-    def minBQ = "--min-BQ ${min_BQ}"
-    def minMQ = "--min-MQ ${min_MQ}"
-    def minTD = "--min-TD ${min_TD}"
-    def exclflag = "--excl-flag ${excl_flag}"
-    def grouplist = group_list != 'False' ? "--group-list ${group_list}" : '' 
-    def mintotal = "--min-total ${min_total}"
-    def minumi = "--min-umi ${min_umi}"
-    def minsnp = "--min-snp ${min_snp}"
+        def samfile = "--sam $sam"
+        def taggroup = tag_group != 'False' ? "--tag-group ${tag_group}" : ''
+        def tagUMI = tag_UMI != 'False' ? "--tag-UMI ${tag_UMI}" : ''
+        def plpfile = plp != 'no_plp' ? "--plp $plp" : ''
+        def vcffile = "--vcf $vcf"
+        def fieldinfo = "--field $field"
+    	def genoerror_off = "--geno-error-offset ${geno_error_offset}"
+    	def genoerror_cof = "--geno-error-coeff ${geno_error_coeff}"
+    	def r2info = "--r2-info ${r2_info}"
+   	def minmac = "--min-mac ${min_mac}"
+   	def mincallrate = "--min-callrate ${min_callrate}"	
+    	def smlist = sm != 'False' ? "--sm $sm" : ''
+    	def sm_list_file = sm_list != 'no_sm_list' ? "--sm-list ${sm_list}" : ''
+    	def alpha_value = alpha_list.replaceAll(/,/, " --alpha ")
+    	def doubletprior = "--doublet-prior ${doublet_prior}"		
+    	def samverbose = "--sam-verbose ${sam_verbose}"
+    	def vcfverbose = "--vcf-verbose ${vcf_verbose}"
+    	def capBQ = "--cap-BQ ${cap_BQ}"
+    	def minBQ = "--min-BQ ${min_BQ}"
+    	def minMQ = "--min-MQ ${min_MQ}"
+    	def minTD = "--min-TD ${min_TD}"
+    	def exclflag = "--excl-flag ${excl_flag}"
+   	def grouplist = group_list != 'False' ? "--group-list ${group_list}" : '' 
+    	def mintotal = "--min-total ${min_total}"
+    	def minumi = "--min-umi ${min_umi}"
+    	def minsnp = "--min-snp ${min_snp}"
 
-    def out = "demux+${tag_group}+${tag_UMI}+${plp}+${field}+${geno_error_offset}+${geno_error_coeff}+${r2_info}+${min_mac}+${min_callrate}+${sm}+${sm_list}+${alpha}+${doublet_prior}+${sam_verbose}+${vcf_verbose}+${cap_BQ}+${min_BQ}+${min_MQ}+${min_TD}+${excl_flag}+${group_list}+${min_total}+${min_umi}+${min_snp}"
+    	def out = "demux+${tag_group}+${tag_UMI}+${plp}+${field}+${geno_error_offset}+${geno_error_coeff}+${r2_info}+${min_mac}+${min_callrate}+${sm}+${sm_list}+${alpha}+${doublet_prior}+${sam_verbose}+${vcf_verbose}+${cap_BQ}+${min_BQ}+${min_MQ}+${min_TD}+${excl_flag}+${group_list}+${min_total}+${min_umi}+${min_snp}"
    
-    if (alpha_list == 'False')
-	"""
-	popscle demuxlet $samfile $taggroup $tagUMI $plpfile $vcffile $fieldinfo ${genoerror_off} ${genoerror_cof} $r2info $minmac $mincallrate $smlist ${sm_list_file} --alpha $alpha $doubletprior $samverbose $vcfverbose $capBQ $minBQ $minMQ $minTD $exclflag $grouplist $mintotal $minumi $minsnp --out $out
-	"""  
+   	if (alpha_list == 'False')
+	    """
+	    popscle demuxlet $samfile $taggroup $tagUMI $plpfile $vcffile $fieldinfo ${genoerror_off} ${genoerror_cof} $r2info $minmac $mincallrate $smlist ${sm_list_file} --alpha $alpha $doubletprior $samverbose $vcfverbose $capBQ $minBQ $minMQ $minTD $exclflag $grouplist $mintotal $minumi $minsnp --out $out
+	    """  
 
-    else{
-    out = "demux+${tag_group}+${tagUMI}+${plp}+${field}+${geno_error_offset}+${geno_error_coeff}+${r2_info}+${min_mac}+${min_callrate}+${sm}+${sm_list}+${alpha_list}+${doublet_prior}+${sam_verbose}+${vcf_verbose}+${cap_BQ}+${min_BQ}+${min_MQ}+${min_TD}+${excl_flag}+${group_list}+${min_total}+${min_umi}+${min_snp}"	
-	"""
-	popscle demuxlet $sam $taggroup $tagUMI $plpfile $vcffile $fieldinfo ${genoerror_off} ${genoerror_cof} $r2info $minmac $mincallrate $smlist ${sm_list_file} --alpha ${alpha_value} $doubletprior $samverbose $vcfverbose $capBQ $minBQ $minMQ $minTD $exclflag $grouplist $mintotal $minumi $minsnp --out $out
-	"""  
-    }
+        else{
+    	    out = "demux+${tag_group}+${tagUMI}+${plp}+${field}+${geno_error_offset}+${geno_error_coeff}+${r2_info}+${min_mac}+${min_callrate}+${sm}+${sm_list}+${alpha_list}+${doublet_prior}+${sam_verbose}+${vcf_verbose}+${cap_BQ}+${min_BQ}+${min_MQ}+${min_TD}+${excl_flag}+${group_list}+${min_total}+${min_umi}+${min_snp}"	
+	    """
+	    popscle demuxlet $sam $taggroup $tagUMI $plpfile $vcffile $fieldinfo ${genoerror_off} ${genoerror_cof} $r2info $minmac $mincallrate $smlist ${sm_list_file} --alpha ${alpha_value} $doubletprior $samverbose $vcfverbose $capBQ $minBQ $minMQ $minTD $exclflag $grouplist $mintotal $minumi $minsnp --out $out
+	    """  
+        }
 }
 
 process souporcell{
@@ -176,13 +176,13 @@ process souporcell{
 	def maxloci = "--max_loci ${max_loci}"
 
 	def restart = restarts != 'False' ? "--restarts $restarts" : ''
-    def commonvariant = common_variants != 'no_common_variants' ? "--common_variants ${common_variants}" : ''
-    def with_commonvariant = common_variants != 'no_common_variants' ? "with_common_variant" : 'no_common_variants'
+    	def commonvariant = common_variants != 'no_common_variants' ? "--common_variants ${common_variants}" : ''
+    	def with_commonvariant = common_variants != 'no_common_variants' ? "with_common_variant" : 'no_common_variants'
 
-    def knowngenotype = known_genotypes != 'no_known_genotypes' ? "--known_genotypes ${known_genotypes}" : ''
-    def with_knowngenotype = known_genotypes != 'no_known_genotypes' ? "with_known_genotype" : 'no_known_genotypes'
+    	def knowngenotype = known_genotypes != 'no_known_genotypes' ? "--known_genotypes ${known_genotypes}" : ''
+    	def with_knowngenotype = known_genotypes != 'no_known_genotypes' ? "with_known_genotype" : 'no_known_genotypes'
 
-    def knowngenotypes_sample = known_genotypes_sample_names != 'False' ? "--known_genotypes_sample_names ${known_genotypes_sample_names}" : ''
+    	def knowngenotypes_sample = known_genotypes_sample_names != 'False' ? "--known_genotypes_sample_names ${known_genotypes_sample_names}" : ''
 	def with_knowngenotypes_sample = known_genotypes_sample_names != 'False' ? "with_knowngenotypes_sample_names" : 'no_knowngenotypes_sample_names'
 
 	def skipremap = skip_remap != 'False' ? "--skip_remap True" : ''
@@ -190,11 +190,11 @@ process souporcell{
 	
 	def out = "soup+${threads}+${clusters}+${ploidy}+${min_alt}+${min_ref}+${max_loci}+$restarts+${with_commonvariant}+${with_knowngenotype}+${with_knowngenotypes_sample}+${skip_remap}+${ignore}"
     
-    """
-    singularity exec -B $PWD/souporcell/:/souporcell $projectDir/souporcell_latest.sif souporcell_pipeline.py $bamfile $barcode $fastafile $thread $cluster $ploi $minalt $minref $maxloci $restart $commonvariant $knowngenotype $knowngenotypes_sample $skipremap $ign -o $out
-    pwd
-    cp -R /root/$out . 
-    """  
+    	"""
+    	singularity exec -B $PWD/souporcell/:/souporcell $projectDir/souporcell_latest.sif souporcell_pipeline.py $bamfile $barcode $fastafile $thread $cluster $ploi $minalt $minref $maxloci $restart $commonvariant $knowngenotype $knowngenotypes_sample $skipremap $ign -o $out
+    	pwd
+    	cp -R /root/$out . 
+    	"""  
 }
 
 
@@ -237,11 +237,11 @@ process vireo{
 	def cell_data = "-c $celldata"
 	def n_donor = "-N $ndonor"
 	def vartrix_data = vartrixData != 'no_vartrixData' ? "--vartrixData $vartrixData" : ''
-    def donor = donorfile != 'no_donorfile' ? "-d $donorfile" : ''
+    	def donor = donorfile != 'no_donorfile' ? "-d $donorfile" : ''
 	def geno_tag = "--genoTag $genoTag"
 	def no_doublet = noDoublet != 'False' ? "--noDoublet" : ''
 	def n_init = "--nInit $nInit"
-    def extra_donor = "--extraDonor $extraDonor"
+    	def extra_donor = "--extraDonor $extraDonor"
 	def extradonor_mode = extraDonorMode != 'distance' ? "--extraDonorMode $extraDonorMode" : ''
 	def learnGT = forceLearnGT != 'False' ? "--forceLearnGT" : ''
 	def ase_mode = ASEmode != 'False' ? "--ASEmode" : ''
@@ -253,9 +253,9 @@ process vireo{
     
     
 
-    """
-    vireo ${cell_data} ${n_donor} ${vartrix_data} $donor ${geno_tag} ${no_doublet} ${n_init} ${extra_donor} ${extradonor_mode} $learnGT ${ase_mode} ${no_plot} ${random_seed} ${cell_range} ${call_ambient_rna} ${n_proc} -o $out  
-    """
+    	"""
+    	vireo ${cell_data} ${n_donor} ${vartrix_data} $donor ${geno_tag} ${no_doublet} ${n_init} ${extra_donor} ${extradonor_mode} $learnGT ${ase_mode} ${no_plot} ${random_seed} ${cell_range} ${call_ambient_rna} ${n_proc} -o $out  
+    	"""
 
 }
 
@@ -271,16 +271,16 @@ process ana_demuxlet{
 	stdout
 
     script:
-    """
-    analysis_demuxlet.R -t demuxlet $demux_out
-    """
+    	"""
+    	analysis_demuxlet.R -t demuxlet $demux_out
+    	"""
 
 }
 
 
 process compare_parameter{
     
-	publishDir "$params.outdir/compare", mode: 'copy'
+    publishDir "$params.outdir/compare", mode: 'copy'
     echo true
 
     input:
@@ -289,44 +289,44 @@ process compare_parameter{
     output:
 	file '*.tsv'
 	/*
-    file "barplot.png"
+    	file "barplot.png"
 	file "barplot by group.png"
-    */
+    	*/
 
     script:
-    def demux_files = ""
-    for(r : demultiplex_result) {
-    	demux_files = r + ":" + demux_files
-    }
+    	def demux_files = ""
+    	for(r : demultiplex_result) {
+    		demux_files = r + ":" + demux_files
+    	}
 
-    """
-    compareParam.R --file ${demux_files}  
-    """
+    	"""
+    	compareParam.R --file ${demux_files}  
+    	"""
 }
 
 workflow demultiplex{
     if (params.demux_tool == "demuxlet"){
 	    input_sam = Channel.fromPath(params.sam)
 	    input_tag_group = split_input(params.tag_group)
-        input_tag_UMI = split_input(params.tag_UMI)
+            input_tag_UMI = split_input(params.tag_UMI)
 	    input_plp = split_input(params.plp)
 
 	    input_vcf = Channel.fromPath(params.vcf)
 	    input_field = split_input(params.field)
 
 	    input_geno_error_offset = split_input(params.geno_error_offset)
-        input_geno_error_coeff = split_input(params.geno_error_coeff)
+       	    input_geno_error_coeff = split_input(params.geno_error_coeff)
 	    input_r2_info= split_input(params.r2_info)
 	    input_min_mac = split_input(params.min_mac)
 	    input_min_callrate = split_input(params.min_callrate)
 	    input_sm = split_input(params.sm)
 	    input_sm_list = split_input(params.sm_list)
-		input_alpha_list = Channel.value(params.alpha_list)
-		input_alpha = split_input(params.alpha)
+	    input_alpha_list = Channel.value(params.alpha_list)
+	    input_alpha = split_input(params.alpha)
 			
 	    input_doublet_prior = split_input(params.doublet_prior)
 	    input_sam_verbose = split_input(params.sam_verbose)
-		input_vcf_verbose = split_input(params.vcf_verbose)
+	    input_vcf_verbose = split_input(params.vcf_verbose)
 		
 	    input_cap_BQ = split_input(params.cap_BQ)
  	    input_min_BQ = split_input(params.min_BQ)
@@ -334,7 +334,7 @@ workflow demultiplex{
 	    input_min_TD = split_input(params.min_TD)
 	    input_excl_flag = split_input(params.excl_flag)
 
-		input_group_list = split_input(params.group_list)
+	    input_group_list = split_input(params.group_list)
 	    input_min_total = split_input(params.min_total)
 	    input_min_umi = split_input(params.min_umi)    
 	    input_min_snp = split_input(params.min_snp)
@@ -357,14 +357,14 @@ workflow demultiplex{
 	    input_max_loci = split_input(params.max_loci)
 	    input_restarts = split_input(params.restarts)
   
-		input_common_variants = split_input(params.common_variants)
+	    input_common_variants = split_input(params.common_variants)
 	    input_known_genotypes = split_input(params.known_genotypes)
 	    input_known_genotypes_sample_names = split_input(params.known_genotypes_sample_names)
 	    input_skip_remap = split_input(params.skip_remap)
 	    input_ignore = split_input(params.ignore)
  	   
 	    souporcell(input_bam, input_barcodes, input_fasta, input_threads, input_clusters, input_ploidy, input_min_alt, input_min_ref, input_max_loci, input_restarts, input_common_variants, input_known_genotypes, input_known_genotypes_sample_names, input_skip_remap, input_ignore) 	 
-		compare_parameter(souporcell.out.collect())
+	    compare_parameter(souporcell.out.collect())
     }
     else if (params.demux_tool == "vireo"){
 	    input_celldata = Channel.fromPath(params.celldata)
@@ -380,7 +380,7 @@ workflow demultiplex{
 	    input_extraDonorMode = split_input(params.extraDonorMode)
 	    input_forceLearnGT = split_input(params.forceLearnGT)
 
-		input_ASEmode = split_input(params.ASEmode)
+	    input_ASEmode = split_input(params.ASEmode)
 	    input_noPlot = split_input(params.noPlot)
  	    input_randSeed = split_input(params.randSeed)
  	    input_cellRange = split_input(params.cellRange)
