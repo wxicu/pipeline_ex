@@ -40,17 +40,16 @@ data = Channel.fromPath(data_path, type: 'dir')
 */
 
 def split_input(input){
-	if (input =~ /,/ ){
-		Channel.from(input).map{ return it.tokenize(',')}.flatten()
-	}
+    if (input =~ /,/ ){
+	Channel.from(input).map{ return it.tokenize(',')}.flatten()
+    }
     else{
-		Channel.from(input)
-	}
+	Channel.from(input)
+    }
 
 }
 process demuxlet {
     publishDir "$params.outdir/demux", mode: 'copy'
-    container 'popscle'
 
     input:
 	file sam
@@ -86,12 +85,10 @@ process demuxlet {
 	each min_umi
 	each min_snp
 
-
     output:
 	file 'demux*'
 
     script:
-	
         def samfile = "--sam $sam"
         def taggroup = tag_group != 'False' ? "--tag-group ${tag_group}" : ''
         def tagUMI = tag_UMI != 'False' ? "--tag-UMI ${tag_UMI}" : ''
@@ -159,12 +156,10 @@ process souporcell{
 	each skip_remap
 	each ignore
 
-
     output:
 	path 'soup*'
 	
     script:	
-
 	def bamfile = "-i $bam"
 	def barcode = "-b $barcodes"
 	def fastafile = "-f $fasta"
@@ -229,7 +224,6 @@ process vireo{
 
     output:
 	path "vireo*"
-	
 
     script:
 	def out = "vireo+${ndonor}+${vartrixData}+${donorfile}+${genoTag}+${noDoublet}+${nInit}+${extraDonor}+${extraDonorMode}+${forceLearnGT}+${ASEmode}+${noPlot}+${randSeed}+${cellRange}+${callAmbientRNAs}+${nproc}"
@@ -296,7 +290,7 @@ process compare_parameter{
     script:
     	def demux_files = ""
     	for(r : demultiplex_result) {
-    		demux_files = r + ":" + demux_files
+    	    demux_files = r + ":" + demux_files
     	}
 
     	"""
