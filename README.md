@@ -10,7 +10,8 @@ main.nf:
   1. demuxlet v2
   2. souporcell (under construction)
   3. vireo
-  4. a simple analysis
+  4. analysis for a single run of demuxlet
+  5. analysis for comparison of parameters running demuxlet
 
 nextflow.config:
   1. parameter info
