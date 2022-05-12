@@ -1,9 +1,10 @@
-#!/usr/bin/env Rscript
+#!/usr/bin/Rscript
 suppressPackageStartupMessages(library("argparse"))
 suppressPackageStartupMessages(library("utils"))
 suppressPackageStartupMessages(library("data.table"))
 suppressPackageStartupMessages(library("ggplot2"))
 suppressPackageStartupMessages(library("reshape2"))
+suppressPackageStartupMessages(library("dplyr"))
 #suppressPackageStartupMessages(library("ggpubr"))
 
 readDemux <- function(demux){
@@ -16,10 +17,10 @@ readDemux <- function(demux){
     else{
       "NA"}
   })
-  demux_df[cell.type=="NA",]$cell.type = demux_df[cell.type=="NA",]$DROPLET.TYPE
+  demux_df[cell.type=="NA",]$cell.type = "doublet"
+  demux_df[DROPLET.TYPE=="AMB",]$cell.type = "ambigous"
   return (demux_df)
 }
-
 
 
 num_stat_demux <- function(demux_list){
@@ -67,10 +68,17 @@ num_stat_demux <- function(demux_list){
     stat_celltype[rindex,1] = row_name
     stat_celltype[is.na(stat_celltype)] = 0
     
-    assignment[,row_name] = demux_df[order(assignment$barcode),]$DROPLET.TYPE
+    assignment[,row_name] = demux_df[order(assignment$barcode),]$cell.type
     
+    f = strsplit(f, split='/demux/',fixed=TRUE)
+    if(length(f[[1]]) == 1){
+        f = f[[1]][1]
+    }
+    else{
+	f = f[[1]][2]
+    }
     trial_param = strsplit(substr(f,7,nchar(f)-5), '+',fixed = TRUE)[[1]]
-    trial[,paste("Trial",rindex)] = trial_param 
+    trial[,paste("Demuxlet Trial",rindex)] = trial_param 
     
     rindex = rindex + 1
   }
@@ -134,8 +142,15 @@ num_stat_vireo <-function(vireo_list){
     
     assignment[,row_name] = donorsid[order(assignment$barcode),]$donor_id
     
+    f = strsplit(f, split='/vireo/',fixed=TRUE)
+    if(length(f[[1]]) == 1){
+        f = f[[1]][1]
+    }
+    else{
+	f = f[[1]][2]
+    }
     trial_param = strsplit(substr(f,7,nchar(f)), '+',fixed = TRUE)[[1]]
-    trial[, paste("Trial",rindex)] = trial_param 
+    trial[, paste("Vireo Trial",rindex)] = trial_param 
     
     rindex = rindex + 1
     
@@ -204,9 +219,17 @@ num_stat_souporcell <-function(souporcell_list){
     stat_donors[is.na(stat_donors)] = 0
     
     assignments[,row_name] = cluster[order(assignments$barcode),]$assignment
+
+    f = strsplit(f, split='/souporcell/',fixed=TRUE)
+    if(length(f[[1]]) == 1){
+        f = f[[1]][1]
+    }
+    else{
+	f = f[[1]][2]
+    }
     
     trial_param = strsplit(substr(f,6,nchar(f)), '+',fixed = TRUE)[[1]]
-    trial[, paste("Trial",rindex)] = trial_param 
+    trial[, paste("Souporcell Trial",rindex)] = trial_param 
     
     rindex = rindex + 1
     
@@ -224,23 +247,68 @@ num_stat_souporcell <-function(souporcell_list){
 parser <- ArgumentParser()
 # specify desired options, here take multiple result as input
 
-#parser$add_argument("-t", "--tool", default="demuxlet", type="String", help="demultiplexing tool [default %(default)s]")
+parser$add_argument("--tool", default="demuxlet", help="demultiplexing tool [default %(default)s]")
 parser$add_argument("--file", nargs=1, help="demultiplexing output file")
 
 args <- parser$parse_args()
 file <- args$file
-file <- strsplit(file, ':',fixed = TRUE)[[1]]
-demux_list= file[which(startsWith(file,'demux'))]
-vireo_list = file[which(startsWith(file,'vireo'))]
-souporcell_list = file[which(startsWith(file,'soup'))]
-if (!identical(demux_list,character(0))){
-  num_stat_demux(demux_list)
-}
-if (!identical(vireo_list,character(0))){
-  num_stat_vireo(vireo_list)
-}
-if (!identical(souporcell_list,character(0))){
-  num_stat_souporcell(souporcell_list)
+tool <- args$tool
+
+demux_list = list()
+vireo_list = list()
+souporcell_list = list()
+
+if (tool != "none"){
+  file <- strsplit(file, ':',fixed = TRUE)[[1]]
+  if (tool == "demuxlet"){
+    demux_list= file[which(startsWith(file,'demux'))]
+    num_stat_demux(demux_list)
+    
+  }
+  else if (tool == "vireo"){
+    vireo_list = file[which(startsWith(file,'vireo'))] 
+    num_stat_vireo(vireo_list)
+    
+  }
+  else if (tool == "souporcell"){
+    souporcell_list = file[which(startsWith(file,'soup'))]
+    num_stat_souporcell(souporcell_list)
+    
+  }
+}else{
+  demux_dir = paste(file,"/demux",sep="")
+  demux_list = list.files (path = demux_dir, pattern="demux+", full.names=TRUE)
+  #print(demux_list)
+  vireo_dir = paste(file,"/vireo",sep="")
+  vireo_list = list.files (path =  vireo_dir, pattern="vireo+", full.names=TRUE)
+  soup_dir = paste(file,"/souporcell",sep="")
+  souporcell_list = list.files (path =  soup_dir, pattern="soup+", full.names=TRUE)
+  if (length(demux_list) != 0){
+    num_stat_demux(demux_list)
+  }else{
+    print("No demuxlet output found!")
+  }
+  
+  if (length(vireo_list) != 0){
+    num_stat_vireo(vireo_list)
+  }else{
+    print("No vireo output found!")
+  }
+  
+  if (length(souporcell_list) != 0){
+    num_stat_souporcell(souporcell_list)
+  }else{
+    print("No souporcell output found!")
+  }
+  
+  assignment_all <- list.files(path =  ".", pattern = "_assignment.tsv", full.names = TRUE) %>%
+    lapply(fread) %>%
+    bind_cols()  %>% 
+    as.data.frame()
+  colnames(assignment_all)[1] = "Barcode"
+  assignment_all = assignment_all[,-which(startsWith(colnames(assignment_all),'barcode'))]
+  write.table(assignment_all,"assignment_all.tsv",row.names=FALSE,sep="\t", quote = FALSE)
+
 }
 
 melt_df <- function(result){
@@ -279,27 +347,12 @@ bar_plot_group <- function(result_melt){
 #bar_plot_group(result_melt)
 
 
-# 
-# 
-# num_stat <- function(demux_df){
-#   #number statistics
-#   num_drop = nrow(demux_df)
-#   print(paste("number of droplets: ", num_drop ))
-#   num_sin = nrow(demux_df[demux_df$DROPLET.TYPE=="SNG",])
-#   prop_sin = round(num_sin*100/num_drop,2)
-#   print(paste("number of singlets: ", num_sin, ", with proportion ", prop_sin ,"%"))
-#   num_dou = nrow(demux_df[demux_df$DROPLET.TYPE=="DBL",])
-#   prop_dou = round(num_dou*100/num_drop,2)
-#   print(paste("number of doublets: ", num_dou, ", with proportion ", prop_dou,"%"))
-#   num_amb = nrow(demux_df[demux_df$DROPLET.TYPE=="AMB",])
-#   prop_amb = round(num_amb*100/num_drop,2)
-#   print(paste("number of ambigous droplets: ", num_amb, ", with proportion ", prop_amb,"%"))
-#   celltyple = unique(demux_df$cell.type)
-#   for( c in celltyple ){
-#     if (c!="DBL" && c!="AMB"){
-#       num_cell = nrow(demux_df[demux_df$cell.type==c,])
-#       prop_cell =  round(num_cell*100/num_drop,2)
-#       print(paste("Among the singlets, number of ", c , ": ", num_cell, ", with proportion ", prop_cell,"%"))
-#     }
-#   }
-# }
+
+
+
+
+
+
+
+#r1 = fread("result/demux/demux+False+False+no_plp+GT+0.1+0.0+R2+1+0.50+False+no_sm_list+0.5+0.50+1000000+10000+40+13+20+0+3844+False+0+0+0.best")
+#r2 = readDemux("result/demux/demux+False+False+no_plp+GT+0.1+0.0+R2+1+0.50+False+no_sm_list+0.5+0.50+1000000+10000+40+13+20+0+3844+False+0+0+0.best")
