@@ -11,23 +11,21 @@ nextflow.enable.dsl=2
 	--geno_error_offset 
 
 echo ${demux_files} > print.txt
-
+    def max_complex_gap = max_complex_gap_freebayes != 'False' ? "--max-complex-gap ${max_complex_gap_freebayes}": ''
  singularity exec -B $PWD/souporcell/:/souporcell $projectDir/souporcell_latest.sif ls $out 
     singularity exec -B $PWD/souporcell/:/souporcell $projectDir/souporcell_latest.sif cp -R $out .
-
-	#compare_parameter(demuxlet.out.collect())
-	compare_parameter(souporcell.out.collect())
-	#compare_parameter(vireo.out.collect())
 	def data_path = "$params.outdir/$params.demux_tool/vireo*"	
     def data = Channel.fromPath(data_path)
     if (params.demux_tool == 'vireo')
 	data = Channel.fromPath(data_path, type: 'dir')	 
-    if(params.alpha_list == 'False'){
+    if(params.alpha_list == 'False')
 	compare_parameter(data.collect())
  
-        file "barplot.png"
+   file "barplot.png"
 	file "barplot by group.png"
-        */
+
+
+   */
 
 def split_input(input){
 	if (input =~ /,/ ){
@@ -118,7 +116,7 @@ process demuxlet {
 		"""  
 
     else{
-        out = "demux+${tag_group}+${tagUMI}+${plp}+${field}+${geno_error_offset}+${geno_error_coeff}+${r2_info}+${min_mac}+${min_callrate}+${sm}+${sm_list}+${alpha_list}+${doublet_prior}+${sam_verbose}+${vcf_verbose}+${cap_BQ}+${min_BQ}+${min_MQ}+${min_TD}+${excl_flag}+${group_list}+${min_total}+${min_umi}+${min_snp}"	
+   out = "demux+${tag_group}+${tagUMI}+${plp}+${field}+${geno_error_offset}+${geno_error_coeff}+${r2_info}+${min_mac}+${min_callrate}+${sm}+${sm_list}+${alpha_list}+${doublet_prior}+${sam_verbose}+${vcf_verbose}+${cap_BQ}+${min_BQ}+${min_MQ}+${min_TD}+${excl_flag}+${group_list}+${min_total}+${min_umi}+${min_snp}"	
 		"""
 		popscle demuxlet $sam $taggroup $tagUMI $plpfile $vcffile $fieldinfo ${genoerror_off} ${genoerror_cof} $r2info $minmac $mincallrate $smlist ${sm_list_file} --alpha ${alpha_value} $doubletprior $samverbose $vcfverbose $capBQ $minBQ $minMQ $minTD $exclflag $grouplist $mintotal $minumi $minsnp --out $out
 		"""  
@@ -184,7 +182,7 @@ process souporcell{
   	each min_ref
 	each max_loci
 	each restarts
-        
+   
 	each common_variants
 	each known_genotypes
 	each known_genotypes_sample_names 
@@ -258,26 +256,23 @@ workflow demultiplex_soup{
 process vireo{
     publishDir "$params.outdir/vireo", mode: 'copy'
     echo true 
-    /*
-    container "vireo"
-    */
 
     input:
 	file celldata
 	each ndonor
-        
+   
 	each vartrixData
 	each donorfile
 	each genoTag
  
-	each noDoublet         
+	each noDoublet    
 	each nInit 
 	each extraDonor
 	each extraDonorMode
 	each forceLearnGT
 
-	each ASEmode           
-	each noPlot            
+	each ASEmode 
+	each noPlot  
 	each randSeed
 	each cellRange
 	each callAmbientRNAs
@@ -367,7 +362,7 @@ process compare_parameter{
 
     input:
 	val demultiplex_result
-        val tool
+   val tool
     output:
 	file '*.tsv'
 
@@ -391,8 +386,8 @@ process compare_parameter{
 
 
 workflow demultiplex{
-        input_tool = Channel.from(params.demux_tool)
-        input_compare_file = Channel.from(params.demuxlet_outdir)
+    input_tool = Channel.from(params.demux_tool)
+    input_compare_file = Channel.from(params.demuxlet_outdir)
 	if (params.demux_tool == "demuxlet"){
 		demultiplex_demux()
 		compare_parameter(demultiplex_demux.out, input_tool)
@@ -407,9 +402,9 @@ workflow demultiplex{
 		demultiplex_vireo()
 		compare_parameter(demultiplex_vireo.out, input_tool)
 	}
-        else if (params.demux_tool == "none"){
-               compare_parameter(input_compare_file, input_tool)
-        }
+    else if (params.demux_tool == "none"){
+   compare_parameter(input_compare_file, input_tool)
+    }
 }
 
 
@@ -418,23 +413,273 @@ process freebayes{
     echo true
 
     input:
-	file bam
-	val vcf
-        file ref
+	file bam_freebayes
+	file vcf_freebayes
+    file ref_freebayes
+    val stdin_freebayes
+    file targets_freebayes
+    file samples_freebayes
+    file cnv_map_freebayes
+    file trace_freebayes
+    file failed_alleles_freebayes
+    file variant_input_freebayes
+    val only_use_input_alleles_freebayes
+    val pvar_freebayes
+    val region_freebayes
+    val show_reference_repeats_freebayes
+    val theta_freebayes
+    val ploidy_freebayes
+    val pooled_freebayes
+    val use_reference_allele_freebayes
+    val reference_quality_freebayes
+    val no_snps_freebayes
+    val no_indels_freebayes
+    val no_mnps_freebayes
+    val no_complex_freebayes
+    val use_best_n_alleles_freebayes
+    val use_duplicate_reads_freebayes
+    val min_mapping_quality_freebayes
+    val min_base_quality_freebayes
+    val mismatch_base_quality_threshold_freebayes
+    val read_mismatch_limit_freebayes
+    val left_align_indels_freebayes
+    val read_max_mismatch_fraction_freebayes
+    val read_snp_limit_freebayes
+    val read_indel_limit_freebayes
+    val no_filters_freebayes
+    val indel_exclusion_window_freebayes
+    val min_alternate_fraction_freebayes
+    val min_alternate_count_freebayes
+    val min_alternate_qsum_freebayes
+    val min_alternate_total_freebayes
+    val min_coverage_freebayes
+    val no_ewens_priors_freebayes
+    val no_population_priors_freebayes
+    val hwe_priors_freebayes
+    val binomial_obs_priors_freebayes
+    val allele_balance_priors_freebayes
+    val site_selection_max_iterations_freebayes
+    val genotyping_max_iterations_freebayes
+    val posterior_integration_limits_freebayes
+    val no_permute_freebayes
+    val exclude_unobserved_genotypes_freebayes
+    val genotype_variant_threshold_freebayes
+    val use_mapping_quality_freebayes
+    val read_dependence_factor_freebayes
+    val no_marginals_freebayes
+    val debug_freebayes
+    val dd_freebayes
+    val gvcf_freebayes
+    val gvcf_chunk_freebayes
+    val gvcf_dont_use_chunk_freebayes
+    file haplotype_basis_alleles_freebayes
+    val report_all_haplotype_alleles_freebayes
+    val report_monomorphic_freebayes
+    val strict_vcf_freebayes
+    val pooled_discrete_freebayes
+    val pooled_continuous_freebayes 
+    val haplotype_length_freebayes 
+    val min_repeat_size_freebayes
+    val min_repeat_entropy_freebayes 
+    val no_partial_observations_freebayes 
+    val min_supporting_allele_qsum_freebayes 
+    val min_supporting_mapping_qsum_freebayes
+    val standard_filters_freebayes
+    val limit_coverage_freebayes
+    val skip_coverage_freebayes 
+    file observation_bias_freebayes
+    val base_quality_cap_freebayes  
+    val prob_contamination_freebayes
+    val legacy_gls_freebayes 
+    file contamination_estimates_freebayes 
+    val report_genotype_likelihood_max_freebayes
+    val genotyping_max_banddepth_freebayes 
+    val harmonic_indel_quality_freebayes 
+    val genotype_qualities_freebayes
+
+
+
+
+
+    output:
+	file '*.vcf'
 
     script:
-    """
-    freebayes -f $ref $bam >$vcf
-    """
+    def stdin = stdin_freebayes != 'False' ? "--stdin" : ''
+    def targets = targets_freebayes.name != 'no_targets' ? "--targets ${targets_freebayes}" : ''
+    def samples = samples_freebayes.name != 'no_samples' ? "--samples ${samples_freebayes}" : ''
+    def cnv_map = cnv_map_freebayes.name != 'no_cnv_map' ? "--cnv-map ${cnv_map_freebayes}" : ''
+    def trace = trace_freebayes.name != 'no_trace' ? "--trace ${trace_freebayes_freebayes}" : ''
+    def failed_alleles = failed_alleles_freebayes.name != 'no_failed_alleles' ? "--failed-alleles ${failed_alleles_freebayes}" : ''
+    def variant_input = variant_input_freebayes.name != 'no_variant_input' ? "--variant-input ${variant_input_freebayes}" : ''
+    def only_use_input_alleles = only_use_input_alleles_freebayes != 'False' ? "--only-use-input-alleles" : ''
+    def pvar = "--pvar ${pvar_freebayes}" 
+    def region = region_freebayes != 'False' ? "--region ${region_freebayes}" : ''
+    def show_reference_repeats = show_reference_repeats_freebayes != 'False' ? "--show-reference-repeats" : ''
+    def theta = "--theta ${theta_freebayes}"
+    def ploidy = "--ploidy ${ploidy_freebayes}" 
+    def pool = pooled_freebayes != 'False' ? "--pooled" : ''
+    def use_reference_allele = use_reference_allele_freebayes != 'False' ? "--use-reference-allele" : ''
+    def reference_quality = "--reference-quality ${reference_quality_freebayes}"  
+    def no_snps = no_snps_freebayes != 'False' ? "--no-snps" : ''
+    def no_indels = no_indels_freebayes != 'False' ? "--no-indels" : ''
+    def no_mnps = no_mnps_freebayes != 'False' ? "--no-mnps" : ''
+    def no_complex = no_complex_freebayes != 'False' ? "--no-complex" : ''
+    def use_best_n_alleles = "--use-best-n-alleles ${use_best_n_alleles_freebayes}"
 
+    def use_duplicate_reads = use_duplicate_reads_freebayes != 'false' ? "--use-duplicate-reads" : ''
+    def min_mapping_quality = "--min-mapping-quality ${min_mapping_quality_freebayes}"
+    def min_base_quality = "--min-base-quality ${min_base_quality_freebayes}" 
+    def mismatch_base_quality_threshold = "--mismatch-base-quality-threshold ${mismatch_base_quality_threshold_freebayes}"
+    def read_mismatch_limit = read_mismatch_limit_freebayes != 'False' ? "-read-mismatch-limit ${read_mismatch_limit_freebayes}":''
+    def left_align_indels = left_align_indels_freebayes != 'false' ? "--dont-left-align-indels" : ''
+    def read_max_mismatch_fraction = "--read-max-mismatch-fraction ${read_max_mismatch_fraction_freebayes}"
+    def read_snp_limit = read_snp_limit_freebayes != 'False' ? "--read-snp-limit ${read_snp_limit_freebayes}":''
+    def read_indel_limit = read_indel_limit_freebayes != 'False' ? "--read-indel-limit ${read_indel_limit_freebayes}" :''
+    def no_filters = no_filters_freebayes != 'False' ? "--no-filters" : ''
+    def indel_exclusion_window = "--indel-exclusion-window ${indel_exclusion_window_freebayes}"
+    def min_alternate_fraction = "--min-alternate-fraction ${min_alternate_fraction_freebayes}"
+    def min_alternate_count = "--min-alternate-count ${min_alternate_count_freebayes}"
+    def min_alternate_qsum = "--min-alternate-qsum ${min_alternate_qsum_freebayes}"
+    def min_alternate_total = "--min-alternate-total ${min_alternate_total_freebayes}"
+    def min_coverage = "--min-coverage ${min_coverage_freebayes}"
+    def no_ewens_priors = no_ewens_priors_freebayes != 'False' ? "--no-ewens-priors" : ''
+    def no_population_priors = no_population_priors_freebayes != 'False' ? "--no-population-priors" : ''
+    def hwe_priors = hwe_priors_freebayes != 'False' ? "--hwe-priors-off" : ''
+    def binomial_obs_priors = binomial_obs_priors_freebayes != 'False' ? "--binomial-obs-priors-off" : ''
+    def allele_balance_priors = allele_balance_priors_freebayes != 'False' ? "--allele-balance-priors-off" : ''
+    def site_selection_max_iterations = "--site-selection-max-iterations ${site_selection_max_iterations_freebayes}"
+    def genotyping_max_iterations = "--genotyping-max-iterations ${genotyping_max_iterations_freebayes}" 
+    def posterior_integration_limits = "--posterior-integration-limits ${posterior_integration_limits_freebayes}" 
+    def no_permute = no_permute_freebayes != 'False' ? "--no-permute" : ''
+    def exclude_unobserved_genotypes = exclude_unobserved_genotypes_freebayes != 'False' ? "--exclude-unobserved-genotypes" : ''
+    def genotype_variant_threshold = genotype_variant_threshold_freebayes != 'False' ? "--genotype-variant-threshold ${genotype_variant_threshold_freebayes}":''
+    def use_mapping_quality = use_mapping_quality_freebayes != 'False' ? "--use-mapping-quality" : ''
+    def read_dependence_factor = "--read-dependence-factor ${read_dependence_factor_freebayes}"
+    def no_marginals = no_marginals_freebayes != 'False' ? "--no-marginals" : ''
+    def debug = debug_freebayes != 'False' ? "--debug" : ''
+    def dd = dd_freebayes != 'False' ? "-dd" : ''
+    def gvcf = gvcf_freebayes !='False' ? "--gvcf":''
+    def gvcf_chunk = gvcf_chunk_freebayes !='False' ? "--gvcf-chunk ${gvcf_chunk_freebayes}":''
+    def gvcf_dont_use_chunk = gvcf_dont_use_chunk_freebayes !='false' ?"--gvcf-dont-use-chunk ${gvcf_dont_use_chunk_freebayes}":''
+    def haplotype_basis_alleles = haplotype_basis_alleles_freebayes.name != 'no_haplotype_basis_alleles' ? "--haplotype-basis-alleles ${haplotype_basis_alleles_freebayes}":''
+    def report_all_haplotype_alleles = report_all_haplotype_alleles_freebayes !='False' ? "--report-all-haplotype-alleles":''
+    def report_monomorphic = report_monomorphic_freebayes !='False' ? "--report-monomorphic":''
+    def strict_vcf = strict_vcf_freebayes!='False' ? "--strict-vcf":''
+    def pooled_discrete = pooled_discrete_freebayes!='False' ? "--pooled-discrete":''
+    def pooled_continuous = pooled_continuous_freebayes !='False' ? "--pooled-continuous":''
+    def haplotype_length = haplotype_length_freebayes = "--haplotype-length ${haplotype_length_freebayes}"
+    def min_repeat_size = "--min-repeat-size ${min_repeat_size_freebayes}"
+    def min_repeat_entropy = "--min-repeat-entropy ${min_repeat_entropy_freebayes}"
+    def no_partial_observations = no_partial_observations_freebayes !='False' ? "--no-partial-observations":''
+    def min_supporting_allele_qsum = "--min-supporting-allele-qsum ${min_supporting_allele_qsum_freebayes}"
+    def min_supporting_mapping_qsum = "--min-supporting-mapping-qsum ${min_supporting_mapping_qsum_freebayes}"
+    def standard_filters = standard_filters_freebayes!='False' ? "--standard-filters":''
+    def limit_coverage = limit_coverage_freebayes!='False' ? "--limit-coverage ${limit_coverage_freebayes}":''
+    def skip_coverage = skip_coverage_freebayes !='False' ? "--skip-coverage ${skip_coverage_freebayes}":''
+    def observation_bias = observation_bias_freebayes.name != 'no_observation_bias' ? "--observation-bias ${observation_bias_freebayes}":''
+    def base_quality_cap = base_quality_cap_freebayes !='False' ? "--base-quality-cap ${base_quality_cap_freebayes}":''
+    def prob_contamination = prob_contamination_freebayes = "--prob-contamination ${prob_contamination_freebayes}"
+    def legacy_gls = legacy_gls_freebayes !='False' ? "--legacy-gls" :''
+    def contamination_estimates = contamination_estimates_freebayes.name != 'no_contamination_estimates' ? "--contamination-estimates ${contamination_estimates_freebayes}":''
+    def report_genotype_likelihood_max = report_genotype_likelihood_max_freebayes !='False' ? "--report-genotype-likelihood-max":''
+    def genotyping_max_banddepth = "--genotyping-max-banddepth ${genotyping_max_banddepth_freebayes}"
+    def harmonic_indel_quality = harmonic_indel_quality_freebayes !='False' ? "--harmonic-indel-quality" :''
+    def genotype_qualities = genotype_qualities_freebayes!='False' ? "--genotype-qualities" :''
+
+    """
+    freebayes -f ${ref_freebayes} ${bam_freebayes} $stdin $targets $samples ${cnv_map} $trace ${failed_alleles} ${variant_input} ${only_use_input_alleles} $pvar $region ${show_reference_repeats} $theta $ploidy $pool ${use_reference_allele} ${reference_quality} ${no_snps} ${no_indels} ${no_mnps} ${no_complex} ${use_best_n_alleles} ${use_duplicate_reads} ${min_mapping_quality} ${min_base_quality} ${mismatch_base_quality_threshold} ${read_mismatch_limit} ${left_align_indels} ${read_max_mismatch_fraction} $read_snp_limit ${read_indel_limit} ${no_filters} ${indel_exclusion_window} ${min_alternate_fraction} ${min_alternate_count} ${min_alternate_qsum} ${min_alternate_total} ${min_coverage} ${no_ewens_priors} ${no_population_priors} ${hwe_priors} ${binomial_obs_priors} ${allele_balance_priors} ${site_selection_max_iterations} ${genotyping_max_iterations} ${posterior_integration_limits} ${no_permute} ${exclude_unobserved_genotypes} ${genotype_variant_threshold} ${use_mapping_quality} ${read_dependence_factor} ${no_marginals} $debug $dd ${gvcf} ${gvcf_chunk} ${gvcf_dont_use_chunk} ${haplotype_basis_alleles} ${report_all_haplotype_alleles} ${report_monomorphic} ${strict_vcf} ${pooled_discrete} ${pooled_continuous} ${haplotype_length} ${min_repeat_size} ${min_repeat_entropy} ${no_partial_observations} ${min_supporting_allele_qsum} ${min_supporting_mapping_qsum} ${standard_filters} ${limit_coverage} ${skip_coverage} ${observation_bias} ${base_quality_cap} ${prob_contamination} ${legacy_gls} ${contamination_estimates} ${report_genotype_likelihood_max} ${genotyping_max_banddepth} ${harmonic_indel_quality} ${genotype_qualities} > ${vcf_freebayes} 
+    """
 }
 
 
 workflow variant_freebayes{
-	input_bam = Channel.fromPath(params.bam)
-	input_vcf = channel.value(params.vcf)
+	input_bam_freebayes = Channel.fromPath(params.bam_freebayes)
+	input_vcf_freebayes = channel.fromPath(params.vcf_freebayes)
 	input_fasta_reference = Channel.fromPath(params.fasta_reference)
-        freebayes(input_bam,input_vcf,input_fasta_reference)
+	input_stdin_freebayes = Channel.value(params.stdin)
+	input_targets_freebayes = Channel.fromPath(params.targets)
+	input_samples_freebayes = Channel.fromPath(params.samples)
+	input_cnv_map_freebayes = Channel.fromPath(params.cnv_map)
+	input_trace_freebayes = Channel.fromPath(params.trace)
+	input_failed_alleles_freebayes = Channel.fromPath(params.failed_alleles)
+	input_variant_input_freebayes = Channel.fromPath(params.variant_input)
+    input_only_use_input_alleles_freebayes = Channel.value(params.only_use_input_alleles)
+	input_pvar_freebayes = channel.value(params.pvar)
+    input_region_freebayes = channel.value(params.region)
+	input_show_reference_repeats_freebayes = channel.value(params.show_reference_repeats)
+    input_theta_freebayes = channel.value(params.theta)
+	input_ploidy_freebayes = channel.value(params.ploidy)
+	input_pooled_freebayes = channel.value(params.pooled)
+	input_use_reference_allele_freebayes = channel.value(params.use_reference_allele)
+	input_reference_quality_freebayes = channel.value(params.reference_quality)
+	input_no_snps_freebayes = channel.value(params.no_snps)
+    input_no_indels_freebayes = channel.value(params.no_indels)
+    input_no_mnps_freebayes = channel.value(params.no_mnps)
+    input_no_complex_freebayes = channel.value(params.no_complex)
+    input_use_best_n_alleles_freebayes = channel.value(params.use_best_n_alleles)
+    input_use_duplicate_reads_freebayes = channel.value(params.use_duplicate_reads)
+    input_min_mapping_quality_freebayes = channel.value(params.min_mapping_quality)
+    input_min_base_quality_freebayes = channel.value(params.min_base_quality)
+    input_mismatch_base_quality_threshold_freebayes = channel.value(params.mismatch_base_quality_threshold)
+    input_read_mismatch_limit_freebayes = channel.value(params.read_mismatch_limit)    
+    input_left_align_indels_freebayes = channel.value(params.left_align_indels)
+    input_read_max_mismatch_fraction_freebayes = channel.value(params.read_max_mismatch_fraction)
+    input_read_snp_limit_freebayes = channel.value(params.read_snp_limit)
+    input_read_indel_limit_freebayes = channel.value(params.read_indel_limit)
+    input_no_filters_freebayes = channel.value(params.no_filters)
+    input_indel_exclusion_window_freebayes = channel.value(params.indel_exclusion_window)
+    input_min_alternate_fraction_freebayes = channel.value(params.min_alternate_fraction)
+    input_min_alternate_count_freebayes = channel.value(params.min_alternate_count)
+    input_min_alternate_qsum_freebayes = channel.value(params.min_alternate_qsum)
+    input_min_alternate_total_freebayes = channel.value(params.min_alternate_total)
+    input_min_coverage_freebayes = channel.value(params.min_coverage)
+    input_no_ewens_priors_freebayes = channel.value(params.no_ewens_priors)
+    input_no_population_priors_freebayes = channel.value(params.no_population_priors)
+    input_hwe_priors_freebayes = channel.value(params.hwe_priors)
+    input_binomial_obs_priors_freebayes = channel.value(params.binomial_obs_priors)
+    input_allele_balance_priors_freebayes = channel.value(params.allele_balance_priors)
+    input_site_selection_max_iterations_freebayes = channel.value(params.site_selection_max_iterations)
+    input_genotyping_max_iterations_freebayes = channel.value(params.genotyping_max_iterations)
+    input_posterior_integration_limits_freebayes = channel.value(params.posterior_integration_limits)
+    input_no_permute_freebayes = channel.value(params.no_permute)
+    input_exclude_unobserved_genotypes_freebayes = channel.value(params.exclude_unobserved_genotypes)
+    input_genotype_variant_threshold_freebayes = channel.value(params.genotype_variant_threshold)
+    input_use_mapping_quality_freebayes = channel.value(params.use_mapping_quality)
+    input_read_dependence_factor_freebayes = channel.value(params.read_dependence_factor)
+    input_no_marginals_freebayes = channel.value(params.no_marginals)
+    input_debug_freebayes = channel.value(params.debug)
+    input_dd_freebayes = channel.value(params.dd)
+    input_gvcf_freebayes = channel.value(params.gvcf)
+    input_gvcf_chunk_freebayes = channel.value(params.gvcf_chunk)
+    input_gvcf_dont_use_chunk_freebayes = channel.value(params.gvcf_dont_use_chunk)
+    input_haplotype_basis_alleles_freebayes = channel.fromPath(params.haplotype_basis_alleles)
+    input_report_all_haplotype_alleles_freebayes = channel.value(params.report_all_haplotype_alleles)
+    input_report_monomorphic_freebayes = channel.value(params.report_monomorphic)
+    input_strict_vcf_freebayes = channel.value(params.strict_vcf)
+    input_pooled_discrete_freebayes = channel.value(params.pooled_discrete)
+    input_pooled_continuous_freebayes = channel.value(params.pooled_continuous)
+    input_haplotype_length_freebayes = channel.value(params.haplotype_length)
+    input_min_repeat_size_freebayes = channel.value(params.min_repeat_size)
+    input_min_repeat_entropy_freebayes = channel.value(params.min_repeat_entropy)
+    input_no_partial_observations_freebayes = channel.value(params.no_partial_observations)
+    input_min_supporting_allele_qsum_freebayes = channel.value(params.min_supporting_allele_qsum)
+    input_min_supporting_mapping_qsum_freebayes = channel.value(params.min_supporting_mapping_qsum)
+    input_standard_filters_freebayes = channel.value(params.standard_filters)
+    input_limit_coverage_freebayes = channel.value(params.limit_coverage)
+    input_skip_coverage_freebayes = channel.value(params.skip_coverage)
+    input_observation_bias_freebayes = channel.fromPath(params.observation_bias)
+    input_base_quality_cap_freebayes = channel.value(params.base_quality_cap)
+    input_prob_contamination_freebayes = channel.value(params.prob_contamination)
+    input_legacy_gls_freebayes = channel.value(params.legacy_gls)
+    input_contamination_estimates_freebayes = channel.fromPath(params.contamination_estimates)
+    input_report_genotype_likelihood_max_freebayes = channel.value(params.report_genotype_likelihood_max)
+    input_genotyping_max_banddepth_freebayes = channel.value(params.genotyping_max_banddepth)
+    input_harmonic_indel_quality_freebayes = channel.value(params.harmonic_indel_quality)
+    input_genotype_qualities_freebayes = channel.value(params.genotype_qualities)
+
+    freebayes(input_bam_freebayes,input_vcf_freebayes,input_fasta_reference,input_stdin_freebayes,input_targets_freebayes,input_samples_freebayes,input_cnv_map_freebayes,input_trace_freebayes,input_failed_alleles_freebayes,input_variant_input_freebayes,input_only_use_input_alleles_freebayes,input_pvar_freebayes,input_region_freebayes,input_show_reference_repeats_freebayes,input_theta_freebayes,input_ploidy_freebayes,input_pooled_freebayes,input_use_reference_allele_freebayes,input_reference_quality_freebayes,input_no_snps_freebayes,input_no_indels_freebayes,input_no_mnps_freebayes,input_no_complex_freebayes,input_use_best_n_alleles_freebayes,input_use_duplicate_reads_freebayes,input_min_mapping_quality_freebayes,input_min_base_quality_freebayes,input_mismatch_base_quality_threshold_freebayes,input_read_mismatch_limit_freebayes,input_left_align_indels_freebayes,input_read_max_mismatch_fraction_freebayes,input_read_snp_limit_freebayes, input_read_indel_limit_freebayes,input_no_filters_freebayes,input_indel_exclusion_window_freebayes,input_min_alternate_fraction_freebayes,input_min_alternate_count_freebayes,input_min_alternate_qsum_freebayes,input_min_alternate_total_freebayes,input_min_coverage_freebayes,input_no_ewens_priors_freebayes,input_no_population_priors_freebayes,input_hwe_priors_freebayes,input_binomial_obs_priors_freebayes,input_allele_balance_priors_freebayes,input_site_selection_max_iterations_freebayes,input_genotyping_max_iterations_freebayes,input_posterior_integration_limits_freebayes,input_no_permute_freebayes,input_exclude_unobserved_genotypes_freebayes,input_genotype_variant_threshold_freebayes,input_use_mapping_quality_freebayes,input_read_dependence_factor_freebayes,input_no_marginals_freebayes,input_debug_freebayes,input_dd_freebayes,input_gvcf_freebayes,input_gvcf_chunk_freebayes,input_gvcf_dont_use_chunk_freebayes,input_haplotype_basis_alleles_freebayes,input_report_all_haplotype_alleles_freebayes,input_report_monomorphic_freebayes,input_strict_vcf_freebayes,input_pooled_discrete_freebayes,input_pooled_continuous_freebayes,input_haplotype_length_freebayes,input_min_repeat_size_freebayes,input_min_repeat_entropy_freebayes, input_no_partial_observations_freebayes, input_min_supporting_allele_qsum_freebayes, input_min_supporting_mapping_qsum_freebayes, input_standard_filters_freebayes, input_limit_coverage_freebayes, input_skip_coverage_freebayes, input_observation_bias_freebayes, input_base_quality_cap_freebayes, input_prob_contamination_freebayes, input_legacy_gls_freebayes, input_contamination_estimates_freebayes,input_report_genotype_likelihood_max_freebayes,input_genotyping_max_banddepth_freebayes,input_harmonic_indel_quality_freebayes, input_genotype_qualities_freebayes
+)
 
 }
 
@@ -446,10 +691,8 @@ workflow call_variant{
 }
 
 workflow{
-	demultiplex()
-       
+	call_variant()
+	
+  
 }
-
-
-
 
