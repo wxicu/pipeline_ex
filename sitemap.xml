@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://example.com/</loc>
-         <lastmod>2022-04-27</lastmod>
+         <loc>https://wxicu.github.io/pipeline_ex/</loc>
+         <lastmod>2022-05-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://example.com/parameter/</loc>
-         <lastmod>2022-04-27</lastmod>
+         <loc>https://wxicu.github.io/pipeline_ex/parameter/</loc>
+         <lastmod>2022-05-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://example.com/usage/</loc>
-         <lastmod>2022-04-27</lastmod>
+         <loc>https://wxicu.github.io/pipeline_ex/usage/</loc>
+         <lastmod>2022-05-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>
