@@ -5,6 +5,7 @@ suppressPackageStartupMessages(library("data.table"))
 suppressPackageStartupMessages(library("ggplot2"))
 suppressPackageStartupMessages(library("reshape2"))
 suppressPackageStartupMessages(library("dplyr"))
+suppressPackageStartupMessages(library("stringr"))
 #suppressPackageStartupMessages(library("ggpubr"))
 
 readDemux <- function(demux){
@@ -67,21 +68,25 @@ num_stat_demux <- function(demux_list){
     }
     stat_celltype[rindex,1] = row_name
     stat_celltype[is.na(stat_celltype)] = 0
+    #question of order
+    #assignment[,row_name] = demux_df[order(assignment$barcode),]$cell.type
+    assignment[,row_name] = demux_df$cell.type
     
-    assignment[,row_name] = demux_df[order(assignment$barcode),]$cell.type
-    
-    f = strsplit(f, split='/demux/',fixed=TRUE)
+    #f = strsplit(f, split='/demux/',fixed=TRUE)
+    f = strsplit(f, split='/demux+',fixed=TRUE)
     if(length(f[[1]]) == 1){
         f = f[[1]][1]
     }
     else{
 	f = f[[1]][2]
     }
-    trial_param = strsplit(substr(f,7,nchar(f)-5), '+',fixed = TRUE)[[1]]
+    #trial_param = strsplit(substr(f,7,nchar(f)-5), '+',fixed = TRUE)[[1]]
+    trial_param = strsplit(f, '+',fixed = TRUE)[[1]]
     trial[,paste("Demuxlet Trial",rindex)] = trial_param 
     
     rindex = rindex + 1
   }
+  assignment = assignment[order(assignment$barcode),]
   write.table(result_df,"demuxlet_result.tsv",row.names=FALSE,sep="\t", quote = FALSE)
   write.table(stat_celltype,"demuxlet_result_detail.tsv",row.names=FALSE,sep="\t", quote = FALSE)
   write.table(assignment,"demuxlet_assignment.tsv",row.names=FALSE,sep="\t", quote = FALSE)
@@ -139,23 +144,25 @@ num_stat_vireo <-function(vireo_list){
     }
     stat_donors[rindex,1] = row_name
     stat_donors[is.na(stat_donors)] = 0
+    #assignment[,row_name] = donorsid[order(assignment$barcode),]$donor_id
+    assignment[,row_name] = donorsid$donor_id
     
-    assignment[,row_name] = donorsid[order(assignment$barcode),]$donor_id
-    
-    f = strsplit(f, split='/vireo/',fixed=TRUE)
+    f = strsplit(f, split='/vireo+',fixed=TRUE)
+    #f = strsplit(f, split='/vireo/',fixed=TRUE)
     if(length(f[[1]]) == 1){
         f = f[[1]][1]
     }
     else{
 	f = f[[1]][2]
     }
-    trial_param = strsplit(substr(f,7,nchar(f)), '+',fixed = TRUE)[[1]]
+    #trial_param = strsplit(substr(f,7,nchar(f)), '+',fixed = TRUE)[[1]]
+    trial_param = strsplit(f, '+',fixed = TRUE)[[1]]
     trial[, paste("Vireo Trial",rindex)] = trial_param 
     
     rindex = rindex + 1
     
   }
-  
+  assignment = assignment[order(assignment$barcode),]
   write.table(result_df,"vireo_result.tsv",row.names=FALSE,sep="\t", quote = FALSE)
   write.table(stat_donors,"vireo_result_detail.tsv",row.names=FALSE,sep="\t", quote = FALSE)
   write.table(assignment,"vireo_assignment.tsv",row.names=FALSE,sep="\t", quote = FALSE)
@@ -218,9 +225,11 @@ num_stat_souporcell <-function(souporcell_list){
     stat_donors[rindex,1] = row_name
     stat_donors[is.na(stat_donors)] = 0
     
-    assignments[,row_name] = cluster[order(assignments$barcode),]$assignment
-
-    f = strsplit(f, split='/souporcell/',fixed=TRUE)
+    #assignments[,row_name] = cluster[order(assignments$barcode),]$assignment
+    assignments[,row_name] = cluster$assignment
+    
+    #f = strsplit(f, split='/souporcell/',fixed=TRUE)
+    f = strsplit(f, split='/soup+',fixed=TRUE)
     if(length(f[[1]]) == 1){
         f = f[[1]][1]
     }
@@ -228,12 +237,14 @@ num_stat_souporcell <-function(souporcell_list){
 	f = f[[1]][2]
     }
     
-    trial_param = strsplit(substr(f,6,nchar(f)), '+',fixed = TRUE)[[1]]
+    #trial_param = strsplit(substr(f,6,nchar(f)), '+',fixed = TRUE)[[1]]
+    trial_param = strsplit(f, '+',fixed = TRUE)[[1]]
     trial[, paste("Souporcell Trial",rindex)] = trial_param 
     
     rindex = rindex + 1
     
   }
+  assignment = assignment[order(assignment$barcode),]
   write.table(result_df,"souporcell_result.tsv",row.names=FALSE,sep="\t", quote = FALSE)
   write.table(stat_donors,"souporcell_result_detail.tsv",row.names=FALSE,sep="\t", quote = FALSE)
   write.table(assignments,"souporcell_assignment.tsv",row.names=FALSE,sep="\t", quote = FALSE)
@@ -242,7 +253,78 @@ num_stat_souporcell <-function(souporcell_list){
   
 }
 
-
+num_stat_scSplit <-function(scSplit_list){
+  result_df = as.data.frame(matrix(nrow= length(scSplit_list), ncol=4))
+  colnames(result_df) = c("Trial","singlets","doublets","ambigous/unassigned")
+  
+  f1_result = fread(paste(scSplit_list[1],"/scSplit_result.csv",sep = ""))
+  f1_prob = fread(paste(scSplit_list[1],"/scSplit_P_s_c.csv",sep = ""))
+  
+  donors = unique(append(f1_result$Cluster,c("unassigned")))
+  stat_donors = as.data.frame(matrix(nrow= length(scSplit_list), ncol=length(donors)+1))
+  colnames(stat_donors) = append("Trial",donors)
+  
+  num_drop = nrow(f1_result)
+  assignment = as.data.frame(matrix(ncol= 1, nrow=num_drop))
+  
+  assignment[,1] = f1_result$Barcode
+  colnames(assignment) = c("barcode")
+  
+  trial = as.data.frame(matrix(nrow=6, ncol=1))
+  colnames(trial) = c("Paramter")
+  trial[,1] = c("with-common-snp","expected-num-samples","max-num-subpopulations-autodetect","num-EM","correction-doublets","known-genotypes")
+  
+  
+  rindex = 1
+  
+  for (f in scSplit_list){
+    result = fread(paste(f,"/scSplit_result.csv",sep = ""))
+    prob = fread(paste(f,"/scSplit_P_s_c.csv",sep = ""))
+    
+    num_dou = nrow(result[substr(result$Cluster, 1, 3) %in% c("DBL"),])
+    prop_dou = round(num_dou*100/num_drop,4)
+    num_amb = 0
+    prop_amb = 0
+    num_sin = nrow(result[substr(result$Cluster, 1, 3) %in% c("SNG"),])
+    prop_sin = round(num_sin*100/num_drop,4)
+    
+    row_name = paste("scSplit",rindex)
+    result_df[rindex,1] = row_name
+    result_df[rindex,2] = num_sin
+    result_df[rindex,3] = num_dou
+    result_df[rindex,4] = num_amb
+    
+    for(d in unique(result$Cluster)){
+      num_cell = nrow(result[result$Cluster == d,])
+      prop_cell =  round(num_cell/num_drop,4)
+      stat_donors[rindex,d] = num_cell
+    }
+    stat_donors[rindex,1] = row_name
+    stat_donors[is.na(stat_donors)] = 0
+    
+    #assignment[,row_name] = donorsid[order(assignment$barcode),]$donor_id
+    assignment[,row_name] = result$Cluster
+    
+    f = strsplit(f, split='/scSplit+',fixed=TRUE)
+    if(length(f[[1]]) == 1){
+      f = f[[1]][1]
+    }else{
+      f = f[[1]][2]
+    }
+    trial_param = strsplit(f, '+',fixed = TRUE)[[1]]
+    trial[, paste("scSplit Trial",rindex)] = trial_param 
+  
+    rindex = rindex + 1
+    
+  }
+  assignment = assignment[order(assignment$barcode),]
+  write.table(result_df,"scSplit_result.tsv",row.names=FALSE,sep="\t", quote = FALSE)
+  write.table(stat_donors,"scSplit_result_detail.tsv",row.names=FALSE,sep="\t", quote = FALSE)
+  write.table(assignment,"scSplit_assignment.tsv",row.names=FALSE,sep="\t", quote = FALSE)
+  write.table(trial,"scSplit_trial.tsv",row.names=FALSE,sep="\t", quote = FALSE)
+  
+  
+}
 #create parser object
 parser <- ArgumentParser()
 # specify desired options, here take multiple result as input
@@ -257,32 +339,40 @@ tool <- args$tool
 demux_list = list()
 vireo_list = list()
 souporcell_list = list()
+scSplit_list = list()
 
 if (tool != "none"){
   file <- strsplit(file, ':',fixed = TRUE)[[1]]
   if (tool == "demuxlet"){
-    demux_list= file[which(startsWith(file,'demux'))]
+    demux_list= str_subset(file,'demux')
+    print(demux_list)
     num_stat_demux(demux_list)
     
   }
   else if (tool == "vireo"){
-    vireo_list = file[which(startsWith(file,'vireo'))] 
+    vireo_list = str_subset(file,'vireo')
     num_stat_vireo(vireo_list)
     
   }
   else if (tool == "souporcell"){
-    souporcell_list = file[which(startsWith(file,'soup'))]
+    souporcell_list = str_subset(file,'soup')
     num_stat_souporcell(souporcell_list)
     
   }
+  else if (tool == "scSplit"){
+    scSplit_list = str_subset(file,'scSplit')
+    num_stat_scSplit(scSplit_list)
+    
+}
 }else{
   demux_dir = paste(file,"/demux",sep="")
   demux_list = list.files (path = demux_dir, pattern="demux+", full.names=TRUE)
-  #print(demux_list)
   vireo_dir = paste(file,"/vireo",sep="")
   vireo_list = list.files (path =  vireo_dir, pattern="vireo+", full.names=TRUE)
   soup_dir = paste(file,"/souporcell",sep="")
   souporcell_list = list.files (path =  soup_dir, pattern="soup+", full.names=TRUE)
+  scSplit_dir = paste(file,"/scSplit",sep="")
+  scSplit_list = list.files (path = scSplit_dir, pattern="scSplit+", full.names=TRUE)
   if (length(demux_list) != 0){
     num_stat_demux(demux_list)
   }else{
@@ -301,6 +391,12 @@ if (tool != "none"){
     print("No souporcell output found!")
   }
   
+  if (length(scSplit_list) != 0){
+    num_stat_scSplit(scSplit_list)
+  }else{
+    print("No scSplit output found!")
+  }
+
   assignment_all <- list.files(path =  ".", pattern = "_assignment.tsv", full.names = TRUE) %>%
     lapply(fread) %>%
     bind_cols()  %>% 
@@ -308,7 +404,6 @@ if (tool != "none"){
   colnames(assignment_all)[1] = "Barcode"
   assignment_all = assignment_all[,-which(startsWith(colnames(assignment_all),'barcode'))]
   write.table(assignment_all,"assignment_all.tsv",row.names=FALSE,sep="\t", quote = FALSE)
-
 }
 
 melt_df <- function(result){
@@ -347,12 +442,6 @@ bar_plot_group <- function(result_melt){
 #bar_plot_group(result_melt)
 
 
+#file = "/home/xic/work/50/def4287076277e51cb85e99283a99f/demux+False+False+no_plp+GT+0.1+0.0+R2+1+0.50+False+no_sm_list+0.2+0.50+1000000+10000+40+13+20+0+3844+False+0+0+0.best:/home/xic/work/89/d427f3e2b4b230fb18ab15c8c78ee9/demux+False+False+no_plp+GT+0.1+0.0+R2+1+0.50+False+no_sm_list+0.5+0.50+1000000+10000+40+13+20+0+3844+False+0+0+0.best"
+#file = "/home/xic/work/83/ff58880f4a2354ac1030b5c84c9581/vireo+4+no_vartrixData+no_donorfile+PL+False+50+0+distance+False+False+False+none+all+False+1"
 
-
-
-
-
-
-
-#r1 = fread("result/demux/demux+False+False+no_plp+GT+0.1+0.0+R2+1+0.50+False+no_sm_list+0.5+0.50+1000000+10000+40+13+20+0+3844+False+0+0+0.best")
-#r2 = readDemux("result/demux/demux+False+False+no_plp+GT+0.1+0.0+R2+1+0.50+False+no_sm_list+0.5+0.50+1000000+10000+40+13+20+0+3844+False+0+0+0.best")
