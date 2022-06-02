@@ -186,10 +186,10 @@ num_stat_souporcell <-function(souporcell_list){
   colnames(stat_donors) = append("Trial",donors)
   
   num_drop = nrow(f1_cluster)
-  assignments = as.data.frame(matrix(ncol= 1, nrow=num_drop))
+  assignment = as.data.frame(matrix(ncol= 1, nrow=num_drop))
   
-  assignments[,1] = f1_cluster$barcode
-  colnames(assignments) = c("barcode")
+  assignment[,1] = f1_cluster$barcode
+  colnames(assignment) = c("barcode")
   
   trial = as.data.frame(matrix(nrow=12, ncol=1))
   colnames(trial) = c("Parameter")
@@ -225,8 +225,8 @@ num_stat_souporcell <-function(souporcell_list){
     stat_donors[rindex,1] = row_name
     stat_donors[is.na(stat_donors)] = 0
     
-    #assignments[,row_name] = cluster[order(assignments$barcode),]$assignment
-    assignments[,row_name] = cluster$assignment
+    #assignment[,row_name] = cluster[order(assignment$barcode),]$assignment
+    assignment[,row_name] = cluster$assignment
     
     #f = strsplit(f, split='/souporcell/',fixed=TRUE)
     f = strsplit(f, split='/soup+',fixed=TRUE)
@@ -247,7 +247,7 @@ num_stat_souporcell <-function(souporcell_list){
   assignment = assignment[order(assignment$barcode),]
   write.table(result_df,"souporcell_result.tsv",row.names=FALSE,sep="\t", quote = FALSE)
   write.table(stat_donors,"souporcell_result_detail.tsv",row.names=FALSE,sep="\t", quote = FALSE)
-  write.table(assignments,"souporcell_assignment.tsv",row.names=FALSE,sep="\t", quote = FALSE)
+  write.table(assignment,"souporcell_assignment.tsv",row.names=FALSE,sep="\t", quote = FALSE)
   write.table(trial,"souporcell_trial.tsv",row.names=FALSE,sep="\t", quote = FALSE)
   
   
