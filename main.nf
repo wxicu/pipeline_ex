@@ -13,8 +13,42 @@ nextflow.enable.dsl=2
     singularity exec -B $PWD/souporcell/:/souporcell $projectDir/souporcell_latest.sif cp -R $out .
 	data = Channel.fromPath(data_path, type: 'dir')	 
     file "barplot.png" file "barplot by group.png"
+   sam = Channel.fromPath(params.sam)
+	bam_scsplit = Channel.fromPath(params.bamscSplit)
+        celldata = Channel.fromPath(params.celldata)
+        vcf_scsplit = Channel.fromPath(params.vcfscSplit)
+ def vcf = params.call_variant == 'True'? (params.variant_tool == "freebayes"? variant_freebayes.out: variant_cellSNP.out): Channel.fromPath(params.vcfscSplit)
+
 
 */
+
+process samstool{
+    publishDir "$params.outdir/samstool", mode: 'copy'
+    container 'biocontainers/samtools:v1.9-4-deb_cv1'
+    containerOptions = "--user root"
+    echo true
+
+    input:
+        file bam
+
+    output:
+        file "sorted.bam"
+
+    script:
+        """
+        samtools view -S -b -q 10 -F 3844 $bam > filtered.bam 
+        samtools sort filtered.bam > sorted.bam
+        """
+}
+
+
+workflow data_preprocess{
+    main:
+        bam = Channel.fromPath(params.sam)
+        samstool(bam)
+    emit:
+        samstool.out
+}
 
 def split_input(input){
 	if (input =~ /,/ ){
@@ -30,125 +64,125 @@ process demuxlet {
     container 'popscle'
 
     input:
-	file sam
-	each tag_group 
-	each tag_UMI
-	
-	each plp
+	    file sam
+        each tag_group 
+        each tag_UMI
+        
+        each plp
 
-	file vcf 
-	each field
-	each geno_error_offset
-	each geno_error_coeff
-	each r2_info
-	each min_mac
-	each min_callrate
-	each sm
-	each sm_list
-	
-	val alpha_list
-	each alpha
-	each doublet_prior
-	each sam_verbose
-	each vcf_verbose
+        file vcf 
+        each field
+        each geno_error_offset
+        each geno_error_coeff
+        each r2_info
+        each min_mac
+        each min_callrate
+        each sm
+        each sm_list
+        
+        val alpha_list
+        each alpha
+        each doublet_prior
+        each sam_verbose
+        each vcf_verbose
 
-	each cap_BQ 
-	each min_BQ
-	each min_MQ
-	each min_TD
-	each excl_flag
+        each cap_BQ 
+        each min_BQ
+        each min_MQ
+        each min_TD
+        each excl_flag
 
-	each group_list
-	each min_total  
-	each min_umi
-	each min_snp
+        each group_list
+        each min_total  
+        each min_umi
+        each min_snp
 
 
     output:
-	file 'demux*'
+	    file 'demux*'
 
     script:
-	
-    def samfile = "--sam $sam"
-    def taggroup = tag_group != 'False' ? "--tag-group ${tag_group}" : ''
-    def tagUMI = tag_UMI != 'False' ? "--tag-UMI ${tag_UMI}" : ''
-    def plpfile = plp != 'no_plp' ? "--plp $plp" : ''
-    def vcffile = "--vcf $vcf"
-    def fieldinfo = "--field $field"
-    def genoerror_off = "--geno-error-offset ${geno_error_offset}"
-    def genoerror_cof = "--geno-error-coeff ${geno_error_coeff}"
-    def r2info = "--r2-info ${r2_info}"
-    def minmac = "--min-mac ${min_mac}"
-    def mincallrate = "--min-callrate ${min_callrate}"	
-    def smlist = sm != 'False' ? "--sm $sm" : ''
-    def sm_list_file = sm_list != 'no_sm_list' ? "--sm-list ${sm_list}" : ''
-    def alpha_value = alpha_list.replaceAll(/,/, " --alpha ")
-    def doubletprior = "--doublet-prior ${doublet_prior}"		
-    def samverbose = "--sam-verbose ${sam_verbose}"
-    def vcfverbose = "--vcf-verbose ${vcf_verbose}"
-    def capBQ = "--cap-BQ ${cap_BQ}"
-    def minBQ = "--min-BQ ${min_BQ}"
-    def minMQ = "--min-MQ ${min_MQ}"
-    def minTD = "--min-TD ${min_TD}"
-    def exclflag = "--excl-flag ${excl_flag}"
-    def grouplist = group_list != 'False' ? "--group-list ${group_list}" : '' 
-    def mintotal = "--min-total ${min_total}"
-    def minumi = "--min-umi ${min_umi}"
-    def minsnp = "--min-snp ${min_snp}"
+        def samfile = "--sam $sam"
+        def taggroup = tag_group != 'False' ? "--tag-group ${tag_group}" : ''
+        def tagUMI = tag_UMI != 'False' ? "--tag-UMI ${tag_UMI}" : ''
+        def plpfile = plp != 'no_plp' ? "--plp $plp" : ''
+        def vcffile = "--vcf $vcf"
+        def fieldinfo = "--field $field"
+        def genoerror_off = "--geno-error-offset ${geno_error_offset}"
+        def genoerror_cof = "--geno-error-coeff ${geno_error_coeff}"
+        def r2info = "--r2-info ${r2_info}"
+        def minmac = "--min-mac ${min_mac}"
+        def mincallrate = "--min-callrate ${min_callrate}"	
+        def smlist = sm != 'False' ? "--sm $sm" : ''
+        def sm_list_file = sm_list != 'no_sm_list' ? "--sm-list ${sm_list}" : ''
+        def alpha_value = alpha_list.replaceAll(/,/, " --alpha ")
+        def doubletprior = "--doublet-prior ${doublet_prior}"		
+        def samverbose = "--sam-verbose ${sam_verbose}"
+        def vcfverbose = "--vcf-verbose ${vcf_verbose}"
+        def capBQ = "--cap-BQ ${cap_BQ}"
+        def minBQ = "--min-BQ ${min_BQ}"
+        def minMQ = "--min-MQ ${min_MQ}"
+        def minTD = "--min-TD ${min_TD}"
+        def exclflag = "--excl-flag ${excl_flag}"
+        def grouplist = group_list != 'False' ? "--group-list ${group_list}" : '' 
+        def mintotal = "--min-total ${min_total}"
+        def minumi = "--min-umi ${min_umi}"
+        def minsnp = "--min-snp ${min_snp}"
 
-    def out = "demux+${tag_group}+${tag_UMI}+${plp}+${field}+${geno_error_offset}+${geno_error_coeff}+${r2_info}+${min_mac}+${min_callrate}+${sm}+${sm_list}+${alpha}+${doublet_prior}+${sam_verbose}+${vcf_verbose}+${cap_BQ}+${min_BQ}+${min_MQ}+${min_TD}+${excl_flag}+${group_list}+${min_total}+${min_umi}+${min_snp}"
-   
-    if (alpha_list == 'False')
-		"""
-		popscle demuxlet $samfile $taggroup $tagUMI $plpfile $vcffile $fieldinfo ${genoerror_off} ${genoerror_cof} $r2info $minmac $mincallrate $smlist ${sm_list_file} --alpha 0 --alpha $alpha $doubletprior $samverbose $vcfverbose $capBQ $minBQ $minMQ $minTD $exclflag $grouplist $mintotal $minumi $minsnp --out $out
-		
-		"""  
+        def out = "demux+${tag_group}+${tag_UMI}+${plp}+${field}+${geno_error_offset}+${geno_error_coeff}+${r2_info}+${min_mac}+${min_callrate}+${sm}+${sm_list}+${alpha}+${doublet_prior}+${sam_verbose}+${vcf_verbose}+${cap_BQ}+${min_BQ}+${min_MQ}+${min_TD}+${excl_flag}+${group_list}+${min_total}+${min_umi}+${min_snp}"
+    
+        if (alpha_list == 'False')
+            """
+            popscle demuxlet $samfile $taggroup $tagUMI $plpfile $vcffile $fieldinfo ${genoerror_off} ${genoerror_cof} $r2info $minmac $mincallrate $smlist ${sm_list_file} --alpha 0 --alpha $alpha $doubletprior $samverbose $vcfverbose $capBQ $minBQ $minMQ $minTD $exclflag $grouplist $mintotal $minumi $minsnp --out $out
+            
+            """  
 
-    else{
-   out = "demux+${tag_group}+${tagUMI}+${plp}+${field}+${geno_error_offset}+${geno_error_coeff}+${r2_info}+${min_mac}+${min_callrate}+${sm}+${sm_list}+${alpha_list}+${doublet_prior}+${sam_verbose}+${vcf_verbose}+${cap_BQ}+${min_BQ}+${min_MQ}+${min_TD}+${excl_flag}+${group_list}+${min_total}+${min_umi}+${min_snp}"	
-		"""
-		popscle demuxlet $sam $taggroup $tagUMI $plpfile $vcffile $fieldinfo ${genoerror_off} ${genoerror_cof} $r2info $minmac $mincallrate $smlist ${sm_list_file} --alpha ${alpha_value} $doubletprior $samverbose $vcfverbose $capBQ $minBQ $minMQ $minTD $exclflag $grouplist $mintotal $minumi $minsnp --out $out
-		"""  
-	}
-	
+        else{
+            out = "demux+${tag_group}+${tagUMI}+${plp}+${field}+${geno_error_offset}+${geno_error_coeff}+${r2_info}+${min_mac}+${min_callrate}+${sm}+${sm_list}+${alpha_list}+${doublet_prior}+${sam_verbose}+${vcf_verbose}+${cap_BQ}+${min_BQ}+${min_MQ}+${min_TD}+${excl_flag}+${group_list}+${min_total}+${min_umi}+${min_snp}"	
+            """
+            popscle demuxlet $sam $taggroup $tagUMI $plpfile $vcffile $fieldinfo ${genoerror_off} ${genoerror_cof} $r2info $minmac $mincallrate $smlist ${sm_list_file} --alpha ${alpha_value} $doubletprior $samverbose $vcfverbose $capBQ $minBQ $minMQ $minTD $exclflag $grouplist $mintotal $minumi $minsnp --out $out
+            """  
+        }
+        
 }
 
 workflow demultiplex_demux{
-	main:
-		input_sam = Channel.fromPath(params.sam)
-		input_tag_group = split_input(params.tag_group)
-		input_tag_UMI = split_input(params.tag_UMI)
-		input_plp = split_input(params.plp)
+    take:
+        sam
+	main:	
+		tag_group = split_input(params.tag_group)
+		tag_UMI = split_input(params.tag_UMI)
+		plp = split_input(params.plp)
 
-		input_vcf = Channel.fromPath(params.vcf)
-		input_field = split_input(params.field)
+		vcf = Channel.fromPath(params.vcf)
+		field = split_input(params.field)
 
-		input_geno_error_offset = split_input(params.geno_error_offset)
-		input_geno_error_coeff = split_input(params.geno_error_coeff)
-		input_r2_info= split_input(params.r2_info)
-		input_min_mac = split_input(params.min_mac)
-		input_min_callrate = split_input(params.min_callrate)
-		input_sm = split_input(params.sm)
-		input_sm_list = split_input(params.sm_list)
-		input_alpha_list = Channel.value(params.alpha_list)
-		input_alpha = split_input(params.alpha)
+		geno_error_offset = split_input(params.geno_error_offset)
+		geno_error_coeff = split_input(params.geno_error_coeff)
+		r2_info= split_input(params.r2_info)
+		min_mac = split_input(params.min_mac)
+		min_callrate = split_input(params.min_callrate)
+		sm = split_input(params.sm)
+		sm_list = split_input(params.sm_list)
+		alpha_list = Channel.value(params.alpha_list)
+		alpha = split_input(params.alpha)
 			
-		input_doublet_prior = split_input(params.doublet_prior)
-		input_sam_verbose = split_input(params.sam_verbose)
-		input_vcf_verbose = split_input(params.vcf_verbose)
+		doublet_prior = split_input(params.doublet_prior)
+		sam_verbose = split_input(params.sam_verbose)
+		vcf_verbose = split_input(params.vcf_verbose)
 		
-		input_cap_BQ = split_input(params.cap_BQ)
-		input_min_BQ = split_input(params.min_BQ)
-		input_min_MQ = split_input(params.min_MQ)
-		input_min_TD = split_input(params.min_TD)
-		input_excl_flag = split_input(params.excl_flag)
+		cap_BQ = split_input(params.cap_BQ)
+		min_BQ = split_input(params.min_BQ)
+		min_MQ = split_input(params.min_MQ)
+		min_TD = split_input(params.min_TD)
+		excl_flag = split_input(params.excl_flag)
 
-		input_group_list = split_input(params.group_list)
-		input_min_total = split_input(params.min_total)
-		input_min_umi = split_input(params.min_umi)    
-		input_min_snp = split_input(params.min_snp)
+		group_list = split_input(params.group_list)
+		min_total = split_input(params.min_total)
+		min_umi = split_input(params.min_umi)    
+		min_snp = split_input(params.min_snp)
 
-		demuxlet(input_sam, input_tag_group, input_tag_UMI, input_plp, input_vcf, input_field, input_geno_error_offset, input_geno_error_coeff, input_r2_info, input_min_mac, input_min_callrate, input_sm, input_sm_list, input_alpha_list, input_alpha, input_doublet_prior, input_sam_verbose, input_vcf_verbose, input_cap_BQ, input_min_BQ, input_min_MQ, input_min_TD, input_excl_flag, input_group_list, input_min_total, input_min_umi, input_min_snp)
+		demuxlet(sam, tag_group, tag_UMI, plp, vcf, field, geno_error_offset, geno_error_coeff, r2_info, min_mac, min_callrate, sm, sm_list, alpha_list, alpha, doublet_prior, sam_verbose, vcf_verbose, cap_BQ, min_BQ, min_MQ, min_TD, excl_flag, group_list, min_total, min_umi, min_snp)
 		
 	emit:
 	    demuxlet.out.collect()
@@ -160,83 +194,82 @@ process souporcell{
     echo true
 
     input:
-	val bam
-	val barcodes
-	val fasta
-	each threads
-	each clusters
+        val bam
+        val barcodes
+        val fasta
+        each threads
+        each clusters
 
-  	each ploidy
-  	each min_alt 
-  	each min_ref
-	each max_loci
-	each restarts
-   
-	each common_variants
-	each known_genotypes
-	each known_genotypes_sample_names 
-		
-	each skip_remap
-	each ignore
+        each ploidy
+        each min_alt 
+        each min_ref
+        each max_loci
+        each restarts
+    
+        each common_variants
+        each known_genotypes
+        each known_genotypes_sample_names 
+            
+        each skip_remap
+        each ignore
 
     output:
-	path 'soup*'
+	    path 'soup*'
 	
     script:	
+        def bamfile = "-i $bam"
+        def barcode = "-b $barcodes"
+        def fastafile = "-f $fasta"
+        def thread = "-t $threads"
+        def cluster = "-k $clusters"
+        def ploi = "--ploidy $ploidy"
+        def minalt = "--min_alt ${min_alt}"
+        def minref = "--min_ref ${min_ref}"
+        def maxloci = "--max_loci ${max_loci}"
 
-	def bamfile = "-i $bam"
-	def barcode = "-b $barcodes"
-	def fastafile = "-f $fasta"
-	def thread = "-t $threads"
-	def cluster = "-k $clusters"
-	def ploi = "--ploidy $ploidy"
-	def minalt = "--min_alt ${min_alt}"
-	def minref = "--min_ref ${min_ref}"
-	def maxloci = "--max_loci ${max_loci}"
+        def restart = restarts != 'False' ? "--restarts $restarts" : ''
+        def commonvariant = common_variants != 'no_common_variants' ? "--common_variants ${common_variants}" : ''
+        def with_commonvariant = common_variants != 'no_common_variants' ? "with_common_variant" : 'no_common_variants'
 
-	def restart = restarts != 'False' ? "--restarts $restarts" : ''
-	def commonvariant = common_variants != 'no_common_variants' ? "--common_variants ${common_variants}" : ''
-	def with_commonvariant = common_variants != 'no_common_variants' ? "with_common_variant" : 'no_common_variants'
+        def knowngenotype = known_genotypes != 'no_known_genotypes' ? "--known_genotypes ${known_genotypes}" : ''
+        def with_knowngenotype = known_genotypes != 'no_known_genotypes' ? "with_known_genotype" : 'no_known_genotypes'
 
-	def knowngenotype = known_genotypes != 'no_known_genotypes' ? "--known_genotypes ${known_genotypes}" : ''
-	def with_knowngenotype = known_genotypes != 'no_known_genotypes' ? "with_known_genotype" : 'no_known_genotypes'
+        def knowngenotypes_sample = known_genotypes_sample_names != 'False' ? "--known_genotypes_sample_names ${known_genotypes_sample_names}" : ''
+        def with_knowngenotypes_sample = known_genotypes_sample_names != 'False' ? "with_knowngenotypes_sample_names" : 'no_knowngenotypes_sample_names'
 
-	def knowngenotypes_sample = known_genotypes_sample_names != 'False' ? "--known_genotypes_sample_names ${known_genotypes_sample_names}" : ''
-	def with_knowngenotypes_sample = known_genotypes_sample_names != 'False' ? "with_knowngenotypes_sample_names" : 'no_knowngenotypes_sample_names'
-
-	def skipremap = skip_remap != 'False' ? "--skip_remap True" : ''
-	def ign = ignore != 'False' ? "--ignore True" : ''
-	
-	def out = "soup+${threads}+${clusters}+${ploidy}+${min_alt}+${min_ref}+${max_loci}+$restarts+${with_commonvariant}+${with_knowngenotype}+${with_knowngenotypes_sample}+${skip_remap}+${ignore}"
-    
-    """
-    singularity exec -B $PWD/souporcell/:/souporcell $projectDir/souporcell_latest.sif souporcell_pipeline.py $bamfile $barcode $fastafile $thread $cluster $ploi $minalt $minref $maxloci $restart $commonvariant $knowngenotype $knowngenotypes_sample $skipremap $ign -o $out
-    pwd
-    cp -R /root/$out .    
-    """  
+        def skipremap = skip_remap != 'False' ? "--skip_remap True" : ''
+        def ign = ignore != 'False' ? "--ignore True" : ''
+        
+        def out = "soup+${threads}+${clusters}+${ploidy}+${min_alt}+${min_ref}+${max_loci}+$restarts+${with_commonvariant}+${with_knowngenotype}+${with_knowngenotypes_sample}+${skip_remap}+${ignore}"
+        
+        """
+        singularity exec -B $PWD/souporcell/:/souporcell $projectDir/souporcell_latest.sif souporcell_pipeline.py $bamfile $barcode $fastafile $thread $cluster $ploi $minalt $minref $maxloci $restart $commonvariant $knowngenotype $knowngenotypes_sample $skipremap $ign -o $out
+        pwd
+        cp -R /root/$out .    
+        """  
 }
 
 workflow demultiplex_soup{
 	main:
-		input_bam = channel.value(params.bam)
-		input_barcodes = channel.value(params.barcodes)
-		input_fasta = channel.value(params.fasta)
-		input_threads = split_input(params.threads)
-		input_clusters = split_input(params.clusters)
+		bam = channel.value(params.bam)
+		barcodes = channel.value(params.barcodes)
+		fasta = channel.value(params.fasta)
+		threads = split_input(params.threads)
+		clusters = split_input(params.clusters)
 
-		input_ploidy = split_input(params.ploidy)
-		input_min_alt = split_input(params.min_alt)
-		input_min_ref = split_input(params.min_ref)
-		input_max_loci = split_input(params.max_loci)
-		input_restarts = split_input(params.restarts)
+		ploidy = split_input(params.ploidy)
+		min_alt = split_input(params.min_alt)
+		min_ref = split_input(params.min_ref)
+		max_loci = split_input(params.max_loci)
+		restarts = split_input(params.restarts)
 
-		input_common_variants = split_input(params.common_variants)
-		input_known_genotypes = split_input(params.known_genotypes)
-		input_known_genotypes_sample_names = split_input(params.known_genotypes_sample_names)
-		input_skip_remap = split_input(params.skip_remap)
-		input_ignore = split_input(params.ignore)
+		common_variants = split_input(params.common_variants)
+		known_genotypes = split_input(params.known_genotypes)
+		known_genotypes_sample_names = split_input(params.known_genotypes_sample_names)
+		skip_remap = split_input(params.skip_remap)
+		ignore = split_input(params.ignore)
 	
-		souporcell(input_bam, input_barcodes, input_fasta, input_threads, input_clusters, input_ploidy, input_min_alt, input_min_ref, input_max_loci, input_restarts, input_common_variants, input_known_genotypes, input_known_genotypes_sample_names, input_skip_remap, input_ignore)
+		souporcell(bam, barcodes, fasta, threads, clusters, ploidy, min_alt, min_ref, max_loci, restarts, common_variants, known_genotypes, known_genotypes_sample_names, skip_remap, ignore)
 			
 	emit:
 	    souporcell.out.collect()
@@ -247,80 +280,82 @@ process vireo{
     echo true 
 
     input:
-	file celldata
-	each ndonor
-   
-	each vartrixData
-	each donorfile
-	each genoTag
- 
-	each noDoublet    
-	each nInit 
-	each extraDonor
-	each extraDonorMode
-	each forceLearnGT
+        file celldata
+        each ndonor
+    
+        each vartrixData
+        each donorfile
+        each genoTag
+    
+        each noDoublet    
+        each nInit 
+        each extraDonor
+        each extraDonorMode
+        each forceLearnGT
 
-	each ASEmode 
-	each noPlot  
-	each randSeed
-	each cellRange
-	each callAmbientRNAs
-	each nproc
+        each ASEmode 
+        each noPlot  
+        each randSeed
+        each cellRange
+        each callAmbientRNAs
+        each nproc
 
 
     output:
-	path "vireo*"
+	    path "vireo*"
 	
 
     script:
-	def out = "vireo+${ndonor}+${vartrixData}+${donorfile}+${genoTag}+${noDoublet}+${nInit}+${extraDonor}+${extraDonorMode}+${forceLearnGT}+${ASEmode}+${noPlot}+${randSeed}+${cellRange}+${callAmbientRNAs}+${nproc}"
+        def out = "vireo+${ndonor}+${vartrixData}+${donorfile}+${genoTag}+${noDoublet}+${nInit}+${extraDonor}+${extraDonorMode}+${forceLearnGT}+${ASEmode}+${noPlot}+${randSeed}+${cellRange}+${callAmbientRNAs}+${nproc}"
 
-	def cell_data = "-c $celldata"
-	def n_donor = "-N $ndonor"
-	def vartrix_data = vartrixData != 'no_vartrixData' ? "--vartrixData $vartrixData" : ''
-    def donor = donorfile != 'no_donorfile' ? "-d $donorfile" : ''
-	def geno_tag = "--genoTag $genoTag"
-	def no_doublet = noDoublet != 'False' ? "--noDoublet" : ''
-	def n_init = "--nInit $nInit"
-    def extra_donor = "--extraDonor $extraDonor"
-	def extradonor_mode = extraDonorMode != 'distance' ? "--extraDonorMode $extraDonorMode" : ''
-	def learnGT = forceLearnGT != 'False' ? "--forceLearnGT" : ''
-	def ase_mode = ASEmode != 'False' ? "--ASEmode" : ''
-	def no_plot = noPlot != 'False' ? "--noPlot" : ''
-	def random_seed = randSeed != 'none'? "--randSeed $randSeed" : ''
-	def cell_range = cellRange != 'all'? "--cellRange $cellRange" : ''
-	def call_ambient_rna = callAmbientRNAs != 'False' ? "--callAmbientRNAs" : ''
-	def n_proc = "--nproc $nproc"
-    
-    """
-    vireo ${cell_data} ${n_donor} ${vartrix_data} $donor ${geno_tag} ${no_doublet} ${n_init} ${extra_donor} ${extradonor_mode} $learnGT ${ase_mode} ${no_plot} ${random_seed} ${cell_range} ${call_ambient_rna} ${n_proc} -o $out  
-    """
+        def cell_data = "-c $celldata"
+        def n_donor = "-N $ndonor"
+        def vartrix_data = vartrixData != 'no_vartrixData' ? "--vartrixData $vartrixData" : ''
+        def donor = donorfile != 'no_donorfile' ? "-d $donorfile" : ''
+        def geno_tag = "--genoTag $genoTag"
+        def no_doublet = noDoublet != 'False' ? "--noDoublet" : ''
+        def n_init = "--nInit $nInit"
+        def extra_donor = "--extraDonor $extraDonor"
+        def extradonor_mode = extraDonorMode != 'distance' ? "--extraDonorMode $extraDonorMode" : ''
+        def learnGT = forceLearnGT != 'False' ? "--forceLearnGT" : ''
+        def ase_mode = ASEmode != 'False' ? "--ASEmode" : ''
+        def no_plot = noPlot != 'False' ? "--noPlot" : ''
+        def random_seed = randSeed != 'none'? "--randSeed $randSeed" : ''
+        def cell_range = cellRange != 'all'? "--cellRange $cellRange" : ''
+        def call_ambient_rna = callAmbientRNAs != 'False' ? "--callAmbientRNAs" : ''
+        def n_proc = "--nproc $nproc"
+        
+        """
+        vireo ${cell_data} ${n_donor} ${vartrix_data} $donor ${geno_tag} ${no_doublet} ${n_init} ${extra_donor} ${extradonor_mode} $learnGT ${ase_mode} ${no_plot} ${random_seed} ${cell_range} ${call_ambient_rna} ${n_proc} -o $out  
+        """
 
 }
 
 workflow demultiplex_vireo{
+    take:
+        celldata
+          
 	main:
-		input_celldata = Channel.fromPath(params.celldata)
-		input_ndonor = split_input(params.ndonor)
+		ndonor = split_input(params.ndonor)
 
-		input_vartrixData = split_input(params.vartrixData)
-		input_donorfile = split_input(params.donorfile)
-		input_genoTag = split_input(params.genoTag)
+		vartrixData = split_input(params.vartrixData)
+		donorfile = split_input(params.donorfile)
+		genoTag = split_input(params.genoTag)
 
-		input_noDoublet = split_input(params.noDoublet)
-		input_nInit = split_input(params.nInit)
-		input_extraDonor = split_input(params.extraDonor)
-		input_extraDonorMode = split_input(params.extraDonorMode)
-		input_forceLearnGT = split_input(params.forceLearnGT)
+		noDoublet = split_input(params.noDoublet)
+		nInit = split_input(params.nInit)
+		extraDonor = split_input(params.extraDonor)
+		extraDonorMode = split_input(params.extraDonorMode)
+		forceLearnGT = split_input(params.forceLearnGT)
 
-		input_ASEmode = split_input(params.ASEmode)
-		input_noPlot = split_input(params.noPlot)
-		input_randSeed = split_input(params.randSeed)
-		input_cellRange = split_input(params.cellRange)
-		input_callAmbientRNAs = split_input(params.callAmbientRNAs)
-		input_nproc = split_input(params.nproc)
+		ASEmode = split_input(params.ASEmode)
+		noPlot = split_input(params.noPlot)
+		randSeed = split_input(params.randSeed)
+		cellRange = split_input(params.cellRange)
+		callAmbientRNAs = split_input(params.callAmbientRNAs)
+		nproc = split_input(params.nproc)
 	
-		vireo(input_celldata, input_ndonor, input_vartrixData, input_donorfile, input_genoTag, input_noDoublet, input_nInit, input_extraDonor, input_extraDonorMode, input_forceLearnGT, input_ASEmode, input_noPlot, input_randSeed, input_cellRange, input_callAmbientRNAs, input_nproc)
+		vireo(celldata, ndonor, vartrixData, donorfile, genoTag, noDoublet, nInit, extraDonor, extraDonorMode, forceLearnGT, ASEmode, noPlot, randSeed, cellRange, callAmbientRNAs, nproc)
 	
 	emit:
 	    vireo.out.collect()
@@ -333,76 +368,77 @@ process scSplit{
     echo true 
 
     input:
-	each vcf
-	each bam
-	each barcode
-	each tag
-	each com
-	each ref
-	each alt
-	each num
-	each sub
-	each ems
-	each dbl
-	each vcf_known
+        file vcf
+        file bam
+        file barcode
+        each tag
+        each com
+        each ref
+        each alt
+        each num
+        each sub
+        each ems
+        each dbl
+        each vcf_known
         path scSplit_loc
         each sample_geno
    	
     output:
-	path "scSplit*"
+	    path "scSplit*"
    
     script:
-    def with_commmon = com != 'no_commonData' ? "with_common_snp" : "without_common_snp"
-    def with_known = vcf_known != 'no_vcfKnownData' ? "with_known_snp" : "without_known_snp"
-    def out = "-o scSplit+${with_commmon}+${num}+${sub}+${ems}+${dbl}+${with_known}"
-    def outdir = "scSplit+${with_commmon}+${num}+${sub}+${ems}+${dbl}+${with_known}"
-    def vcf_data = "-v $vcf"
-    def bam_data = "-i $bam"
-    def barcode_data = "-b $barcode"
-    def tag_data = "--tag $tag"
-    def common_data = com != 'no_commonData' ? "--com $com" : ''
-    def num_data = "-n $num"
-    def sub_data = "--sub $sub"
-    def ems_data = "--ems $ems"
-    def dbl_data = dbl != 'False' ? "--dbl $dbl" : ''
-    def vcf_known_data = vcf_known != 'no_vcfKnownData' ? "--vcf ${vcf_known}" : ''
-    
-    if (sample_geno != 'False'){
-    """
-    mkdir $outdir
-    python3 ${scSplit_loc}/scSplit count ${vcf_data} ${bam_data} ${barcode_data} ${common_data} -r $ref -a $alt $out
-    python3 ${scSplit_loc}/scSplit run -r ${outdir}/$ref -a ${outdir}/$alt $out ${num_data} ${sub_data} ${ems_data} ${dbl_data} ${vcf_known_data}
-    python3 ${scSplit_loc}/scSplit genotype -r ${outdir}/$ref -a ${outdir}/$alt -p ${outdir}/scSplit_P_s_c.csv $out
-    """
-    }
-    else{
-    """
-    mkdir $outdir
-    python3 ${scSplit_loc}/scSplit count ${vcf_data} ${bam_data} ${barcode_data} ${common_data} -r $ref -a $alt $out
-    python3 ${scSplit_loc}/scSplit run -r ${outdir}/$ref -a ${outdir}/$alt $out ${num_data} ${sub_data} ${ems_data} ${dbl_data} ${vcf_known_data}
-    """
-}
+        def with_commmon = com != 'no_commonData' ? "with_common_snp" : "without_common_snp"
+        def with_known = vcf_known != 'no_vcfKnownData' ? "with_known_snp" : "without_known_snp"
+        def out = "-o scSplit+${with_commmon}+${num}+${sub}+${ems}+${dbl}+${with_known}"
+        def outdir = "scSplit+${with_commmon}+${num}+${sub}+${ems}+${dbl}+${with_known}"
+        def vcf_data = "-v $vcf"
+        def bam_data = "-i $bam"
+        def barcode_data = "-b $barcode"
+        def tag_data = "--tag $tag"
+        def common_data = com != 'no_commonData' ? "--com $com" : ''
+        def num_data = "-n $num"
+        def sub_data = "--sub $sub"
+        def ems_data = "--ems $ems"
+        def dbl_data = dbl != 'False' ? "--dbl $dbl" : ''
+        def vcf_known_data = vcf_known != 'no_vcfKnownData' ? "--vcf ${vcf_known}" : ''
+        
+        if (sample_geno != 'False'){
+        """
+        mkdir $outdir
+        python3 ${scSplit_loc}/scSplit count ${vcf_data} ${bam_data} ${barcode_data} ${common_data} -r $ref -a $alt $out
+        python3 ${scSplit_loc}/scSplit run -r ${outdir}/$ref -a ${outdir}/$alt $out ${num_data} ${sub_data} ${ems_data} ${dbl_data} ${vcf_known_data}
+        python3 ${scSplit_loc}/scSplit genotype -r ${outdir}/$ref -a ${outdir}/$alt -p ${outdir}/scSplit_P_s_c.csv $out
+        """
+        }
+        else{
+        """
+        mkdir $outdir
+        python3 ${scSplit_loc}/scSplit count ${vcf_data} ${bam_data} ${barcode_data} ${common_data} -r $ref -a $alt $out
+        python3 ${scSplit_loc}/scSplit run -r ${outdir}/$ref -a ${outdir}/$alt $out ${num_data} ${sub_data} ${ems_data} ${dbl_data} ${vcf_known_data}
+        """
+       }
     
 }
 
 workflow demultiplex_scSplit{
-     main:
-		input_vcf_scsplit = Channel.fromPath(params.vcfscSplit)
-		input_bam_scsplit = split_input(params.bamscSplit)
-		input_bar_scsplit = split_input(params.barscSplit)
-		input_tag_scsplit = split_input(params.tagscSplit)
-		input_com_scsplit = split_input(params.comscSplit)
-		input_ref_scsplit = split_input(params.refscSplit)
-		input_alt_scsplit = split_input(params.altscSplit)
-		input_num_scsplit = split_input(params.numscSplit)
-		input_sub_scsplit = split_input(params.subscSplit)
-		input_ems_scsplit = split_input(params.emsscSplit)
-		input_dbl_scsplit = split_input(params.dblscSplit)
-		input_vcf_known_scsplit = split_input(params.vcf_known_scSplit)
-                input_scSplit_loc = Channel.from(params.scSplit_loc)
-                input_sample_geno = Channel.from(params.sample_geno)
-		scSplit(input_vcf_scsplit, input_bam_scsplit, input_bar_scsplit, input_tag_scsplit, input_com_scsplit, input_ref_scsplit, input_alt_scsplit, input_num_scsplit, input_sub_scsplit, input_ems_scsplit, input_dbl_scsplit, input_vcf_known_scsplit,input_scSplit_loc,input_sample_geno)
-      emit:
+    take:
+        bam_scsplit
+        vcf_scsplit
+    main:s
+		bar_scsplit = Channel.fromPath(params.barscSplit)
+		tag_scsplit = split_input(params.tagscSplit)
+		com_scsplit = split_input(params.comscSplit)
+		ref_scsplit = split_input(params.refscSplit)
+		alt_scsplit = split_input(params.altscSplit)
+		num_scsplit = split_input(params.numscSplit)
+		sub_scsplit = split_input(params.subscSplit)
+		ems_scsplit = split_input(params.emsscSplit)
+		dbl_scsplit = split_input(params.dblscSplit)
+		vcf_known_scsplit = split_input(params.vcf_known_scSplit)
+        scSplit_loc = Channel.from(params.scSplit_loc)
+        sample_geno = Channel.from(params.sample_geno)
+		scSplit(vcf_scsplit, bam_scsplit, bar_scsplit, tag_scsplit, com_scsplit, ref_scsplit, alt_scsplit, num_scsplit, sub_scsplit, ems_scsplit, dbl_scsplit, vcf_known_scsplit,scSplit_loc,sample_geno)
+    emit:
 	    scSplit.out.collect()
 	
 
@@ -410,7 +446,6 @@ workflow demultiplex_scSplit{
 }
 
 process ana_demuxlet{
-
     publishDir "$params.outdir/demux", mode: 'copy'
     echo true
 
@@ -424,7 +459,6 @@ process ana_demuxlet{
     """
     analysis_demuxlet.R -t demuxlet $demux_out
     """
-
 }
 
 
@@ -433,54 +467,57 @@ process compare_parameter{
     echo true
 
     input:
-    val demultiplex_result
-    val tool
+        val demultiplex_result
+        val tool
     
     output:
-    file '*.tsv'
+        file '*.tsv'
 
     script:
-    def demux_files = ""
-    if (tool != "none"){
-	for(r : demultiplex_result) {
-	    	demux_files = r + ":" + demux_files
-    	}
-    }
-    else{
-	demux_files = demultiplex_result
-    }
-   
+        def demux_files = ""
+        if (tool != "none"){
+            for(r : demultiplex_result) {
+                demux_files = r + ":" + demux_files
+            }
+        }
+        else{
+        demux_files = demultiplex_result
+        }
 
-    """
-    compareParam.R --tool $tool --file ${demux_files} 
-    """
+        """
+        compareParam.R --tool $tool --file ${demux_files} 
+        """
 }
 
 
 workflow demultiplex{
-    input_tool = Channel.from(params.demux_tool)
-    input_compare_file = Channel.from(params.demuxlet_outdir)
-	if (params.demux_tool == "demuxlet"){
-		demultiplex_demux()
-		compare_parameter(demultiplex_demux.out, input_tool)
-	}
+    take: 
+        bam
+        vcf
+    main:
+	    input_tool = Channel.from(params.demux_tool)
+	    input_compare_file = Channel.from(params.demuxlet_outdir)
+		if (params.demux_tool == "demuxlet"){
+			demultiplex_demux(bam)
+			compare_parameter(demultiplex_demux.out, input_tool)
+		}
 
-	else if (params.demux_tool == "souporcell"){
-		demultiplex_soup()
-		compare_parameter(demultiplex_soup.out, input_tool)
-	}
+		else if (params.demux_tool == "souporcell"){
+			demultiplex_soup()
+			compare_parameter(demultiplex_soup.out, input_tool)
+		}
 
-	else if (params.demux_tool == "vireo"){
-		demultiplex_vireo()
-		compare_parameter(demultiplex_vireo.out, input_tool)
-	}
-	else if (params.demux_tool == "scSplit"){
-		demultiplex_scSplit()
-                compare_parameter(demultiplex_scSplit.out, input_tool)
-    	}
-    	else if (params.demux_tool == "none"){
-   		compare_parameter(input_compare_file, input_tool)
-    	}
+		else if (params.demux_tool == "vireo"){
+			demultiplex_vireo(vcf)
+			compare_parameter(demultiplex_vireo.out, input_tool)
+		}
+		else if (params.demux_tool == "scSplit"){
+			demultiplex_scSplit(bam,vcf)
+		    compare_parameter(demultiplex_scSplit.out, input_tool)
+	    }
+	    else if (params.demux_tool == "none"){
+	   		compare_parameter(input_compare_file, input_tool)
+	    }
 }
 
 
@@ -489,92 +526,81 @@ process freebayes{
     echo true
 
     input:
-	file bam_freebayes
-	file vcf_freebayes
-    file ref_freebayes
-    val stdin_freebayes
-    file targets_freebayes
-    file samples_freebayes
-    file cnv_map_freebayes
-
-    file variant_input_freebayes
-    val only_use_input_alleles_freebayes
-    val pvar_freebayes
-    val region_freebayes
-
-    val theta_freebayes
-    val ploidy_freebayes
-
-    val use_reference_allele_freebayes
-    val reference_quality_freebayes
-    
-    
-    val use_best_n_alleles_freebayes
-    val use_duplicate_reads_freebayes
-    val min_mapping_quality_freebayes
-    val min_base_quality_freebayes
-    val mismatch_base_quality_threshold_freebayes
-    val read_mismatch_limit_freebayes
-    val dont_left_align_indels_freebayes
-    val read_max_mismatch_fraction_freebayes
-    val read_snp_limit_freebayes
-    val read_indel_limit_freebayes
-
-
-    val min_alternate_fraction_freebayes
-    val min_alternate_count_freebayes
-    val min_alternate_qsum_freebayes
-    val min_alternate_total_freebayes
-    val min_coverage_freebayes
-
-    val no_population_priors_freebayes
-    val hwe_priors_off_freebayes
-    val binomial_obs_priors_off_freebayes
-    val allele_balance_priors_off_freebayes
-
-    val genotyping_max_iterations_freebayes
-    val posterior_integration_limits_freebayes
-
-    val exclude_unobserved_genotypes_freebayes
-    val genotype_variant_threshold_freebayes
-    val use_mapping_quality_freebayes
-    val read_dependence_factor_freebayes
-
-    val debug_freebayes
-    val dd_freebayes
-    val gvcf_freebayes
-    val gvcf_chunk_freebayes
-    val gvcf_dont_use_chunk_freebayes
-    file haplotype_basis_alleles_freebayes
-    val report_all_haplotype_alleles_freebayes
-    val report_monomorphic_freebayes
-    val strict_vcf_freebayes
-    val pooled_discrete_freebayes
-    val pooled_continuous_freebayes 
-    val haplotype_length_freebayes 
-    val min_repeat_size_freebayes
-    val min_repeat_entropy_freebayes 
-    val no_partial_observations_freebayes 
-    val min_supporting_allele_qsum_freebayes 
-    val min_supporting_mapping_qsum_freebayes
-    val standard_filters_freebayes
-    val limit_coverage_freebayes
-    val skip_coverage_freebayes 
-    file observation_bias_freebayes
-    val base_quality_cap_freebayes  
-    val prob_contamination_freebayes
-    val legacy_gls_freebayes 
-    file contamination_estimates_freebayes 
-    val report_genotype_likelihood_max_freebayes
-    val genotyping_max_banddepth_freebayes 
-    val harmonic_indel_quality_freebayes 
-    val genotype_qualities_freebayes
-    val throw_away_snp_obs_freebayes
-    val throw_away_indel_obs_freebayes
-    val throw_away_mnps_obs_freebayes
-    val throw_away_complex_obs_freebayes
-    file bam_list_freebayes
-    file populations_freebayes
+        file bam_freebayes
+        val stdin_freebayes
+        file ref_freebayes
+        file targets_freebayes
+        val region_freebayes
+        file samples_freebayes
+        file cnv_map_freebayes
+        file vcf_freebayes
+        val gvcf_freebayes
+        val gvcf_chunk_freebayes
+        val gvcf_dont_use_chunk_freebayes
+        file variant_input_freebayes
+        val only_use_input_alleles_freebayes
+        file haplotype_basis_alleles_freebayes
+        val report_all_haplotype_alleles_freebayes
+        val report_monomorphic_freebayes
+        val pvar_freebayes
+        val strict_vcf_freebayes
+        val theta_freebayes
+        val ploidy_freebayes
+        val pooled_discrete_freebayes
+        val pooled_continuous_freebayes 
+        val use_reference_allele_freebayes
+        val reference_quality_freebayes
+        val use_best_n_alleles_freebayes
+        val haplotype_length_freebayes 
+        val min_repeat_size_freebayes
+        val min_repeat_entropy_freebayes 
+        val no_partial_observations_freebayes 
+        val throw_away_snp_obs_freebayes
+        val throw_away_indel_obs_freebayes
+        val throw_away_mnps_obs_freebayes
+        val throw_away_complex_obs_freebayes
+        val dont_left_align_indels_freebayes
+        val use_duplicate_reads_freebayes
+        val min_mapping_quality_freebayes
+        val min_base_quality_freebayes
+        val min_supporting_allele_qsum_freebayes 
+        val min_supporting_mapping_qsum_freebayes
+        val mismatch_base_quality_threshold_freebayes
+        val read_mismatch_limit_freebayes
+        val read_max_mismatch_fraction_freebayes
+        val read_snp_limit_freebayes
+        val read_indel_limit_freebayes
+        val standard_filters_freebayes
+        val min_alternate_fraction_freebayes
+        val min_alternate_count_freebayes
+        val min_alternate_qsum_freebayes
+        val min_alternate_total_freebayes
+        val min_coverage_freebayes
+        val limit_coverage_freebayes
+        val skip_coverage_freebayes 
+        val no_population_priors_freebayes
+        val hwe_priors_off_freebayes
+        val binomial_obs_priors_off_freebayes
+        val allele_balance_priors_off_freebayes
+        file observation_bias_freebayes
+        val base_quality_cap_freebayes  
+        val prob_contamination_freebayes
+        val legacy_gls_freebayes 
+        file contamination_estimates_freebayes 
+        val report_genotype_likelihood_max_freebayes
+        val genotyping_max_iterations_freebayes
+        val genotyping_max_banddepth_freebayes 
+        val posterior_integration_limits_freebayes
+        val exclude_unobserved_genotypes_freebayes
+        val genotype_variant_threshold_freebayes
+        val use_mapping_quality_freebayes
+        val harmonic_indel_quality_freebayes 
+        val read_dependence_factor_freebayes
+        val genotype_qualities_freebayes
+        val debug_freebayes
+        val dd_freebayes
+        file bam_list_freebayes
+        file populations_freebayes
 
 
     output:
@@ -585,20 +611,15 @@ process freebayes{
     def targets = targets_freebayes.name != 'no_targets' ? "--targets ${targets_freebayes}" : ''
     def samples = samples_freebayes.name != 'no_samples' ? "--samples ${samples_freebayes}" : ''
     def cnv_map = cnv_map_freebayes.name != 'no_cnv_map' ? "--cnv-map ${cnv_map_freebayes}" : ''
-
     def variant_input = variant_input_freebayes.name != 'no_variant_input' ? "--variant-input ${variant_input_freebayes}" : ''
     def only_use_input_alleles = only_use_input_alleles_freebayes != 'False' ? "--only-use-input-alleles" : ''
     def pvar = "--pvar ${pvar_freebayes}" 
     def region = region_freebayes != 'False' ? "--region ${region_freebayes}" : ''
-
     def theta = "--theta ${theta_freebayes}"
     def ploidy = "--ploidy ${ploidy_freebayes}" 
-
     def use_reference_allele = use_reference_allele_freebayes != 'False' ? "--use-reference-allele" : ''
     def reference_quality = "--reference-quality ${reference_quality_freebayes}"  
-    
     def use_best_n_alleles = "--use-best-n-alleles ${use_best_n_alleles_freebayes}"
-
     def use_duplicate_reads = use_duplicate_reads_freebayes != 'false' ? "--use-duplicate-reads" : ''
     def min_mapping_quality = "--min-mapping-quality ${min_mapping_quality_freebayes}"
     def min_base_quality = "--min-base-quality ${min_base_quality_freebayes}" 
@@ -608,27 +629,21 @@ process freebayes{
     def read_max_mismatch_fraction = "--read-max-mismatch-fraction ${read_max_mismatch_fraction_freebayes}"
     def read_snp_limit = read_snp_limit_freebayes != 'False' ? "--read-snp-limit ${read_snp_limit_freebayes}":''
     def read_indel_limit = read_indel_limit_freebayes != 'False' ? "--read-indel-limit ${read_indel_limit_freebayes}" :''
-
-
     def min_alternate_fraction = "--min-alternate-fraction ${min_alternate_fraction_freebayes}"
     def min_alternate_count = "--min-alternate-count ${min_alternate_count_freebayes}"
     def min_alternate_qsum = "--min-alternate-qsum ${min_alternate_qsum_freebayes}"
     def min_alternate_total = "--min-alternate-total ${min_alternate_total_freebayes}"
     def min_coverage = "--min-coverage ${min_coverage_freebayes}"
-
     def no_population_priors = no_population_priors_freebayes != 'False' ? "--no-population-priors" : ''
     def hwe_priors_off = hwe_priors_off_freebayes != 'False' ? "--hwe-priors-off" : ''
     def binomial_obs_priors_off = binomial_obs_priors_off_freebayes != 'False' ? "--binomial-obs-priors-off" : ''
     def allele_balance_priors_off = allele_balance_priors_off_freebayes != 'False' ? "--allele-balance-priors-off" : ''
-
     def genotyping_max_iterations = "--genotyping-max-iterations ${genotyping_max_iterations_freebayes}" 
     def posterior_integration_limits = "--posterior-integration-limits ${posterior_integration_limits_freebayes}" 
-
     def exclude_unobserved_genotypes = exclude_unobserved_genotypes_freebayes != 'False' ? "--exclude-unobserved-genotypes" : ''
     def genotype_variant_threshold = genotype_variant_threshold_freebayes != 'False' ? "--genotype-variant-threshold ${genotype_variant_threshold_freebayes}":''
     def use_mapping_quality = use_mapping_quality_freebayes != 'False' ? "--use-mapping-quality" : ''
     def read_dependence_factor = "--read-dependence-factor ${read_dependence_factor_freebayes}"
-
     def debug = debug_freebayes != 'False' ? "--debug" : ''
     def dd = dd_freebayes != 'False' ? "-dd" : ''
     def gvcf = gvcf_freebayes !='False' ? "--gvcf":''
@@ -667,102 +682,93 @@ process freebayes{
 
 
     """
-    freebayes -f ${ref_freebayes} ${bam_freebayes} ${bam_list} $populations $stdin $targets $samples ${cnv_map} ${variant_input} ${only_use_input_alleles} $pvar $region $theta $ploidy ${use_reference_allele} ${reference_quality} ${use_best_n_alleles} ${use_duplicate_reads} ${min_mapping_quality} ${min_base_quality} ${mismatch_base_quality_threshold} ${read_mismatch_limit} ${dont_left_align_indels} ${read_max_mismatch_fraction} $read_snp_limit ${read_indel_limit} ${min_alternate_fraction} ${min_alternate_count} ${min_alternate_qsum} ${min_alternate_total} ${min_coverage} ${no_population_priors} ${hwe_priors_off} ${binomial_obs_priors_off} ${allele_balance_priors_off} ${genotyping_max_iterations} ${posterior_integration_limits} ${exclude_unobserved_genotypes} ${genotype_variant_threshold} ${use_mapping_quality} ${read_dependence_factor} $debug $dd ${gvcf} ${gvcf_chunk} ${gvcf_dont_use_chunk} ${haplotype_basis_alleles} ${report_all_haplotype_alleles} ${report_monomorphic} ${strict_vcf} ${pooled_discrete} ${pooled_continuous} ${haplotype_length} ${min_repeat_size} ${min_repeat_entropy} ${no_partial_observations} ${min_supporting_allele_qsum} ${min_supporting_mapping_qsum} ${standard_filters} ${limit_coverage} ${skip_coverage} ${observation_bias} ${base_quality_cap} ${prob_contamination} ${legacy_gls} ${contamination_estimates} ${report_genotype_likelihood_max} ${genotyping_max_banddepth} ${harmonic_indel_quality} ${genotype_qualities} ${throw_away_snp_obs} ${throw_away_indel_obs} ${throw_away_mnps_obs} ${throw_away_complex_obs} > ${vcf_freebayes} 
+    freebayes -f ${ref_freebayes} ${bam_freebayes} ${bam_list} $populations $stdin $targets $samples ${cnv_map} ${variant_input} ${only_use_input_alleles} $pvar $region $theta $ploidy ${use_reference_allele} ${reference_quality} ${use_best_n_alleles} ${use_duplicate_reads} ${min_mapping_quality} ${min_base_quality} ${mismatch_base_quality_threshold} ${read_mismatch_limit} ${dont_left_align_indels} ${read_max_mismatch_fraction} ${read_snp_limit} ${read_indel_limit} ${min_alternate_fraction} ${min_alternate_count} ${min_alternate_qsum} ${min_alternate_total} ${min_coverage} ${no_population_priors} ${hwe_priors_off} ${binomial_obs_priors_off} ${allele_balance_priors_off} ${genotyping_max_iterations} ${posterior_integration_limits} ${exclude_unobserved_genotypes} ${genotype_variant_threshold} ${use_mapping_quality} ${read_dependence_factor} $debug $dd ${gvcf} ${gvcf_chunk} ${gvcf_dont_use_chunk} ${haplotype_basis_alleles} ${report_all_haplotype_alleles} ${report_monomorphic} ${strict_vcf} ${pooled_discrete} ${pooled_continuous} ${haplotype_length} ${min_repeat_size} ${min_repeat_entropy} ${no_partial_observations} ${min_supporting_allele_qsum} ${min_supporting_mapping_qsum} ${standard_filters} ${limit_coverage} ${skip_coverage} ${observation_bias} ${base_quality_cap} ${prob_contamination} ${legacy_gls} ${contamination_estimates} ${report_genotype_likelihood_max} ${genotyping_max_banddepth} ${harmonic_indel_quality} ${genotype_qualities} ${throw_away_snp_obs} ${throw_away_indel_obs} ${throw_away_mnps_obs} ${throw_away_complex_obs} > ${vcf_freebayes} 
     """
 }
 
 
 workflow variant_freebayes{
-	input_bam_freebayes = Channel.fromPath(params.bam_freebayes)
-	input_vcf_freebayes = channel.fromPath(params.vcf_freebayes)
-	input_fasta_reference = Channel.fromPath(params.fasta_reference)
-	input_stdin_freebayes = Channel.value(params.stdin)
-	input_targets_freebayes = Channel.fromPath(params.targets)
-	input_samples_freebayes = Channel.fromPath(params.samples)
-	input_cnv_map_freebayes = Channel.fromPath(params.cnv_map)
+    main:
+        bam_freebayes = Channel.fromPath(params.bam_freebayes)
+        stdin_freebayes = Channel.value(params.stdin)
+        fasta_reference = Channel.fromPath(params.fasta_reference)
+        targets_freebayes = Channel.fromPath(params.targets)
+        region_freebayes = channel.value(params.region)
+        samples_freebayes = Channel.fromPath(params.samples)
+        cnv_map_freebayes = Channel.fromPath(params.cnv_map)
+        vcf_freebayes = channel.fromPath(params.vcf_freebayes)
+        gvcf_freebayes = channel.value(params.gvcf)
+        gvcf_chunk_freebayes = channel.value(params.gvcf_chunk)
+        gvcf_dont_use_chunk_freebayes = channel.value(params.gvcf_dont_use_chunk)
+        variant_input_freebayes = Channel.fromPath(params.variant_input)
+        only_use_input_alleles_freebayes = Channel.value(params.only_use_input_alleles)
+        haplotype_basis_alleles_freebayes = channel.fromPath(params.haplotype_basis_alleles)
+        report_all_haplotype_alleles_freebayes = channel.value(params.report_all_haplotype_alleles)
+        report_monomorphic_freebayes = channel.value(params.report_monomorphic)
+        pvar_freebayes = channel.value(params.pvar)
+        strict_vcf_freebayes = channel.value(params.strict_vcf)
+        theta_freebayes = channel.value(params.theta)
+        pooled_discrete_freebayes = channel.value(params.pooled_discrete)
+        pooled_continuous_freebayes = channel.value(params.pooled_continuous)
+        ploidy_freebayes = channel.value(params.ploidy)
+        use_reference_allele_freebayes = channel.value(params.use_reference_allele)
+        reference_quality_freebayes = channel.value(params.reference_quality)
+        use_best_n_alleles_freebayes = channel.value(params.use_best_n_alleles)
+        haplotype_length_freebayes = channel.value(params.haplotype_length)
+        min_repeat_size_freebayes = channel.value(params.min_repeat_size)
+        min_repeat_entropy_freebayes = channel.value(params.min_repeat_entropy)
+        no_partial_observations_freebayes = channel.value(params.no_partial_observations)
+        throw_away_snp_obs = channel.value(params.throw_away_snp_obs)
+        throw_away_indel_obs = channel.value(params.throw_away_indel_obs)
+        throw_away_mnps_obs = channel.value(params.throw_away_mnps_obs)
+        throw_away_complex_obs = channel.value(params.throw_away_complex_obs)
+        dont_left_align_indels_freebayes = channel.value(params.dont_left_align_indels)
+        use_duplicate_reads_freebayes = channel.value(params.use_duplicate_reads)
+        min_mapping_quality_freebayes = channel.value(params.min_mapping_quality)
+        min_base_quality_freebayes = channel.value(params.min_base_quality)
+        min_supporting_allele_qsum_freebayes = channel.value(params.min_supporting_allele_qsum)
+        min_supporting_mapping_qsum_freebayes = channel.value(params.min_supporting_mapping_qsum)
+        mismatch_base_quality_threshold_freebayes = channel.value(params.mismatch_base_quality_threshold)
+        read_mismatch_limit_freebayes = channel.value(params.read_mismatch_limit)    
+        read_max_mismatch_fraction_freebayes = channel.value(params.read_max_mismatch_fraction)
+        read_snp_limit_freebayes = channel.value(params.read_snp_limit)
+        read_indel_limit_freebayes = channel.value(params.read_indel_limit)
+        standard_filters_freebayes = channel.value(params.standard_filters)
+        min_alternate_fraction_freebayes = channel.value(params.min_alternate_fraction)
+        min_alternate_count_freebayes = channel.value(params.min_alternate_count)
+        min_alternate_qsum_freebayes = channel.value(params.min_alternate_qsum)
+        min_alternate_total_freebayes = channel.value(params.min_alternate_total)
+        min_coverage_freebayes = channel.value(params.min_coverage)
+        limit_coverage_freebayes = channel.value(params.limit_coverage)
+        skip_coverage_freebayes = channel.value(params.skip_coverage)
+        no_population_priors_freebayes = channel.value(params.no_population_priors)
+        hwe_priors_off_freebayes = channel.value(params.hwe_priors_off)
+        binomial_obs_priors_off_freebayes = channel.value(params.binomial_obs_priors_off)
+        allele_balance_priors_off_freebayes = channel.value(params.allele_balance_priors_off)
+        observation_bias_freebayes = channel.fromPath(params.observation_bias)
+        base_quality_cap_freebayes = channel.value(params.base_quality_cap)
+        prob_contamination_freebayes = channel.value(params.prob_contamination)
+        legacy_gls_freebayes = channel.value(params.legacy_gls)
+        contamination_estimates_freebayes = channel.fromPath(params.contamination_estimates)
+        report_genotype_likelihood_max_freebayes = channel.value(params.report_genotype_likelihood_max)
+        genotyping_max_iterations_freebayes = channel.value(params.genotyping_max_iterations)
+        genotyping_max_banddepth_freebayes = channel.value(params.genotyping_max_banddepth)
+        posterior_integration_limits_freebayes = channel.value(params.posterior_integration_limits)
+        exclude_unobserved_genotypes_freebayes = channel.value(params.exclude_unobserved_genotypes)
+        genotype_variant_threshold_freebayes = channel.value(params.genotype_variant_threshold)
+        use_mapping_quality_freebayes = channel.value(params.use_mapping_quality)
+        harmonic_indel_quality_freebayes = channel.value(params.harmonic_indel_quality)
+        read_dependence_factor_freebayes = channel.value(params.read_dependence_factor)
+        genotype_qualities_freebayes = channel.value(params.genotype_qualities)
+        debug_freebayes = channel.value(params.debug)
+        dd_freebayes = channel.value(params.dd)
+        bam_list_freebayes = channel.fromPath(params.bam_list)
+        populations_freebayes = channel.fromPath(params.populations)
 
-	input_variant_input_freebayes = Channel.fromPath(params.variant_input)
-    input_only_use_input_alleles_freebayes = Channel.value(params.only_use_input_alleles)
-	input_pvar_freebayes = channel.value(params.pvar)
-    input_region_freebayes = channel.value(params.region)
+        freebayes(bam_freebayes, stdin_freebayes, fasta_reference, targets_freebayes, region_freebayes, samples_freebayes, cnv_map_freebayes, vcf_freebayes,gvcf_freebayes,gvcf_chunk_freebayes,gvcf_dont_use_chunk_freebayes, variant_input_freebayes,only_use_input_alleles_freebayes,haplotype_basis_alleles_freebayes,report_all_haplotype_alleles_freebayes, report_monomorphic_freebayes, pvar_freebayes,strict_vcf_freebayes,theta_freebayes,ploidy_freebayes, pooled_discrete_freebayes,pooled_continuous_freebayes,use_reference_allele_freebayes, reference_quality_freebayes, use_best_n_alleles_freebayes,haplotype_length_freebayes,min_repeat_size_freebayes,min_repeat_entropy_freebayes, no_partial_observations_freebayes, throw_away_snp_obs, throw_away_indel_obs, throw_away_mnps_obs, throw_away_complex_obs, dont_left_align_indels_freebayes, use_duplicate_reads_freebayes,min_mapping_quality_freebayes, min_base_quality_freebayes,min_supporting_allele_qsum_freebayes, min_supporting_mapping_qsum_freebayes, mismatch_base_quality_threshold_freebayes,read_mismatch_limit_freebayes,read_max_mismatch_fraction_freebayes,read_snp_limit_freebayes, read_indel_limit_freebayes, standard_filters_freebayes,min_alternate_fraction_freebayes,min_alternate_count_freebayes,min_alternate_qsum_freebayes,min_alternate_total_freebayes,min_coverage_freebayes, limit_coverage_freebayes, skip_coverage_freebayes, no_population_priors_freebayes,hwe_priors_off_freebayes,binomial_obs_priors_off_freebayes,allele_balance_priors_off_freebayes, observation_bias_freebayes, base_quality_cap_freebayes, prob_contamination_freebayes, legacy_gls_freebayes, contamination_estimates_freebayes, report_genotype_likelihood_max_freebayes,genotyping_max_iterations_freebayes,genotyping_max_banddepth_freebayes,posterior_integration_limits_freebayes,exclude_unobserved_genotypes_freebayes, genotype_variant_threshold_freebayes,use_mapping_quality_freebayes,harmonic_indel_quality_freebayes, read_dependence_factor_freebayes, genotype_qualities_freebayes, debug_freebayes,dd_freebayes, bam_list_freebayes, populations_freebayes)
 
-    input_theta_freebayes = channel.value(params.theta)
-	input_ploidy_freebayes = channel.value(params.ploidy)
-
-	input_use_reference_allele_freebayes = channel.value(params.use_reference_allele)
-	input_reference_quality_freebayes = channel.value(params.reference_quality)
-	
-    input_use_best_n_alleles_freebayes = channel.value(params.use_best_n_alleles)
-    input_use_duplicate_reads_freebayes = channel.value(params.use_duplicate_reads)
-    input_min_mapping_quality_freebayes = channel.value(params.min_mapping_quality)
-    input_min_base_quality_freebayes = channel.value(params.min_base_quality)
-    input_mismatch_base_quality_threshold_freebayes = channel.value(params.mismatch_base_quality_threshold)
-    input_read_mismatch_limit_freebayes = channel.value(params.read_mismatch_limit)    
-    input_dont_left_align_indels_freebayes = channel.value(params.dont_left_align_indels)
-    input_read_max_mismatch_fraction_freebayes = channel.value(params.read_max_mismatch_fraction)
-    input_read_snp_limit_freebayes = channel.value(params.read_snp_limit)
-    input_read_indel_limit_freebayes = channel.value(params.read_indel_limit)
-
-
-    input_min_alternate_fraction_freebayes = channel.value(params.min_alternate_fraction)
-    input_min_alternate_count_freebayes = channel.value(params.min_alternate_count)
-    input_min_alternate_qsum_freebayes = channel.value(params.min_alternate_qsum)
-    input_min_alternate_total_freebayes = channel.value(params.min_alternate_total)
-    input_min_coverage_freebayes = channel.value(params.min_coverage)
-
-    input_no_population_priors_freebayes = channel.value(params.no_population_priors)
-    input_hwe_priors_off_freebayes = channel.value(params.hwe_priors_off)
-    input_binomial_obs_priors_off_freebayes = channel.value(params.binomial_obs_priors_off)
-    input_allele_balance_priors_off_freebayes = channel.value(params.allele_balance_priors_off)
-
-    input_genotyping_max_iterations_freebayes = channel.value(params.genotyping_max_iterations)
-    input_posterior_integration_limits_freebayes = channel.value(params.posterior_integration_limits)
-
-    input_exclude_unobserved_genotypes_freebayes = channel.value(params.exclude_unobserved_genotypes)
-    input_genotype_variant_threshold_freebayes = channel.value(params.genotype_variant_threshold)
-    input_use_mapping_quality_freebayes = channel.value(params.use_mapping_quality)
-    input_read_dependence_factor_freebayes = channel.value(params.read_dependence_factor)
-
-    input_debug_freebayes = channel.value(params.debug)
-    input_dd_freebayes = channel.value(params.dd)
-    input_gvcf_freebayes = channel.value(params.gvcf)
-    input_gvcf_chunk_freebayes = channel.value(params.gvcf_chunk)
-    input_gvcf_dont_use_chunk_freebayes = channel.value(params.gvcf_dont_use_chunk)
-    input_haplotype_basis_alleles_freebayes = channel.fromPath(params.haplotype_basis_alleles)
-    input_report_all_haplotype_alleles_freebayes = channel.value(params.report_all_haplotype_alleles)
-    input_report_monomorphic_freebayes = channel.value(params.report_monomorphic)
-    input_strict_vcf_freebayes = channel.value(params.strict_vcf)
-    input_pooled_discrete_freebayes = channel.value(params.pooled_discrete)
-    input_pooled_continuous_freebayes = channel.value(params.pooled_continuous)
-    input_haplotype_length_freebayes = channel.value(params.haplotype_length)
-    input_min_repeat_size_freebayes = channel.value(params.min_repeat_size)
-    input_min_repeat_entropy_freebayes = channel.value(params.min_repeat_entropy)
-    input_no_partial_observations_freebayes = channel.value(params.no_partial_observations)
-    input_min_supporting_allele_qsum_freebayes = channel.value(params.min_supporting_allele_qsum)
-    input_min_supporting_mapping_qsum_freebayes = channel.value(params.min_supporting_mapping_qsum)
-    input_standard_filters_freebayes = channel.value(params.standard_filters)
-    input_limit_coverage_freebayes = channel.value(params.limit_coverage)
-    input_skip_coverage_freebayes = channel.value(params.skip_coverage)
-    input_observation_bias_freebayes = channel.fromPath(params.observation_bias)
-    input_base_quality_cap_freebayes = channel.value(params.base_quality_cap)
-    input_prob_contamination_freebayes = channel.value(params.prob_contamination)
-    input_legacy_gls_freebayes = channel.value(params.legacy_gls)
-    input_contamination_estimates_freebayes = channel.fromPath(params.contamination_estimates)
-    input_report_genotype_likelihood_max_freebayes = channel.value(params.report_genotype_likelihood_max)
-    input_genotyping_max_banddepth_freebayes = channel.value(params.genotyping_max_banddepth)
-    input_harmonic_indel_quality_freebayes = channel.value(params.harmonic_indel_quality)
-    input_genotype_qualities_freebayes = channel.value(params.genotype_qualities)
-    input_throw_away_snp_obs = channel.value(params.throw_away_snp_obs)
-    input_throw_away_indel_obs = channel.value(params.throw_away_indel_obs)
-    input_throw_away_mnps_obs = channel.value(params.throw_away_mnps_obs)
-    input_throw_away_complex_obs = channel.value(params.throw_away_complex_obs)
-    input_bam_list_freebayes = channel.fromPath(params.bam_list)
-    input_populations_freebayes = channel.fromPath(params.populations)
-
-
- 
-
-    freebayes(input_bam_freebayes,input_vcf_freebayes,input_fasta_reference,input_stdin_freebayes,input_targets_freebayes,input_samples_freebayes,input_cnv_map_freebayes,input_variant_input_freebayes,input_only_use_input_alleles_freebayes,input_pvar_freebayes,input_region_freebayes,input_theta_freebayes,input_ploidy_freebayes,input_use_reference_allele_freebayes,input_reference_quality_freebayes,input_use_best_n_alleles_freebayes,input_use_duplicate_reads_freebayes,input_min_mapping_quality_freebayes,input_min_base_quality_freebayes,input_mismatch_base_quality_threshold_freebayes,input_read_mismatch_limit_freebayes,input_dont_left_align_indels_freebayes,input_read_max_mismatch_fraction_freebayes,input_read_snp_limit_freebayes, input_read_indel_limit_freebayes,input_min_alternate_fraction_freebayes,input_min_alternate_count_freebayes,input_min_alternate_qsum_freebayes,input_min_alternate_total_freebayes,input_min_coverage_freebayes,input_no_population_priors_freebayes,input_hwe_priors_off_freebayes,input_binomial_obs_priors_off_freebayes,input_allele_balance_priors_off_freebayes,input_genotyping_max_iterations_freebayes,input_posterior_integration_limits_freebayes,input_exclude_unobserved_genotypes_freebayes,input_genotype_variant_threshold_freebayes,input_use_mapping_quality_freebayes,input_read_dependence_factor_freebayes,input_debug_freebayes,input_dd_freebayes,input_gvcf_freebayes,input_gvcf_chunk_freebayes,input_gvcf_dont_use_chunk_freebayes,input_haplotype_basis_alleles_freebayes,input_report_all_haplotype_alleles_freebayes,input_report_monomorphic_freebayes,input_strict_vcf_freebayes,input_pooled_discrete_freebayes,input_pooled_continuous_freebayes,input_haplotype_length_freebayes,input_min_repeat_size_freebayes,input_min_repeat_entropy_freebayes, input_no_partial_observations_freebayes, input_min_supporting_allele_qsum_freebayes, input_min_supporting_mapping_qsum_freebayes, input_standard_filters_freebayes, input_limit_coverage_freebayes, input_skip_coverage_freebayes, input_observation_bias_freebayes, input_base_quality_cap_freebayes, input_prob_contamination_freebayes, input_legacy_gls_freebayes, input_contamination_estimates_freebayes,input_report_genotype_likelihood_max_freebayes,input_genotyping_max_banddepth_freebayes,input_harmonic_indel_quality_freebayes, input_genotype_qualities_freebayes, input_throw_away_snp_obs, input_throw_away_indel_obs, input_throw_away_mnps_obs, input_throw_away_complex_obs, input_bam_list_freebayes,input_populations_freebayes)
+    emit:
+        freebayes.out
 
 }
 process cellSNP{
@@ -770,111 +776,162 @@ process cellSNP{
     echo true
 
     input:
-	
-    val samFile_cellSNP
-    file samFileList_cellSNP
-    file regionsVCF_cellSNP
-    file targetsVCF_cellSNP
-    file barcodeFile_cellSNP
-    file sampleList_cellSNP
-    val sampleIDs_cellSNP
-    val genotype_cellSNP
-    val gzip_cellSNP
-    val printSkipSNPs_cellSNP
-    val nproc_cellSNP
-    file refseq_cellSNP
-    val chrom_cellSNP
-    val cellTAG_cellSNP
-    val UMItag_cellSNP
-    val minCOUNT_cellSNP
-    val minMAF_cellSNP
-    val doubletGL_cellSNP
-    val inclFLAG_cellSNP
-    val exclFLAG_cellSNP
-    val minLEN_cellSNP
-    val minMAPQ_cellSNP
-    val maxDEPTH_cellSNP
-    val countORPHAN_cellSNP
-    val outDir_cellSNP
+        val samFile_cellSNP
+        file samFileList_cellSNP
+        file regionsVCF_cellSNP
+        file targetsVCF_cellSNP
+        file barcodeFile_cellSNP
+        file sampleList_cellSNP
+        val sampleIDs_cellSNP
+        val genotype_cellSNP
+        val gzip_cellSNP
+        val printSkipSNPs_cellSNP
+        val nproc_cellSNP
+        file refseq_cellSNP
+        val chrom_cellSNP
+        val cellTAG_cellSNP
+        val UMItag_cellSNP
+        val minCOUNT_cellSNP
+        val minMAF_cellSNP
+        val doubletGL_cellSNP
+        val inclFLAG_cellSNP
+        val exclFLAG_cellSNP
+        val minLEN_cellSNP
+        val minMAPQ_cellSNP
+        val maxDEPTH_cellSNP
+        val countORPHAN_cellSNP
+        val outDir_cellSNP
 
 
     output:
-    file "cellSNP*"
+        file "cellSNP*"
 
     script:
-    def samFile = samFile_cellSNP != 'no_samFile' ? "--samFile ${samFile_cellSNP}" : ''
-    def samFileList = samFileList_cellSNP.name != 'no_samFileList' ? "--samFileList ${samFileList_cellSNP}" : ''
-    def regionsVCF = regionsVCF_cellSNP.name != 'no_regionsVCF' ? "--regionsVCF ${regionsVCF_cellSNP}" : ''
-    def targetsVCF = targetsVCF_cellSNP.name != 'no_targetsVCF' ? "--targetsVCF ${targetsVCF_cellSNP}" : ''
-    def barcodeFile = barcodeFile_cellSNP.name != 'no_barcodeFile' ? "--barcodeFile ${barcodeFile_cellSNP}" : ''
-    def sampleList = sampleList_cellSNP.name != 'no_sampleList' ? "--sampleList ${sampleList_cellSNP}" : ''
-    def sampleIDs = sampleIDs_cellSNP != 'no_sampleIDs' ? "--sampleIDs ${sampleIDs_cellSNP}" : ''
-    def genotype = genotype_cellSNP != 'False' ? "--genotype" : ''
-    def gzip = gzip_cellSNP != 'False' ? "--gzip" : ''
-    def printSkipSNPs = printSkipSNPs_cellSNP != 'False' ? "--printSkipSNPs" : ''
-    def nproc = nproc_cellSNP != 'False' ? "--nproc ${nproc_cellSNP}" : ''
-    def refseq = refseq_cellSNP.name != 'no_refseq' ? "--refseq ${refseq_cellSNP}" : ''
-    def chrom = chrom_cellSNP != 'False' ? "--chrom ${chrom_cellSNP}" : ''
-    def cellTAG = "--cellTAG ${cellTAG_cellSNP}" 
-    def UMItag = "--UMItag ${UMItag_cellSNP}" 
-    def minCOUNT = "--minCOUNT ${minCOUNT_cellSNP}" 
-    def minMAF = "--minMAF ${minMAF_cellSNP}" 
-    def doubletGL = doubletGL_cellSNP != 'False' ? "--doubletGL" : ''
-    def inclFLAG = inclFLAG_cellSNP != 'False' ? "--inclFLAG ${inclFLAG_cellSNP}" : ''
-    def exclFLAG = exclFLAG_cellSNP != 'False' ? "--exclFLAG ${exclFLAG_cellSNP}" : ''
-    def minLEN = "--minLEN ${minLEN_cellSNP}" 
-    def minMAPQ = "--minMAPQ ${minMAPQ_cellSNP}" 
-    def maxDEPTH = "--maxDEPTH ${maxDEPTH_cellSNP}" 
-    def countORPHAN = countORPHAN_cellSNP != 'False' ? "--countORPHAN" : ''
-    def outDir = "--outDir ${outDir_cellSNP}" 
+        def samFile = samFile_cellSNP != 'no_samFile' ? "--samFile ${samFile_cellSNP}" : ''
+        def samFileList = samFileList_cellSNP.name != 'no_samFileList' ? "--samFileList ${samFileList_cellSNP}" : ''
+        def regionsVCF = regionsVCF_cellSNP.name != 'no_regionsVCF' ? "--regionsVCF ${regionsVCF_cellSNP}" : ''
+        def targetsVCF = targetsVCF_cellSNP.name != 'no_targetsVCF' ? "--targetsVCF ${targetsVCF_cellSNP}" : ''
+        def barcodeFile = barcodeFile_cellSNP.name != 'no_barcodeFile' ? "--barcodeFile ${barcodeFile_cellSNP}" : ''
+        def sampleList = sampleList_cellSNP.name != 'no_sampleList' ? "--sampleList ${sampleList_cellSNP}" : ''
+        def sampleIDs = sampleIDs_cellSNP != 'no_sampleIDs' ? "--sampleIDs ${sampleIDs_cellSNP}" : ''
+        def genotype = genotype_cellSNP != 'False' ? "--genotype" : ''
+        def gzip = gzip_cellSNP != 'False' ? "--gzip" : ''
+        def printSkipSNPs = printSkipSNPs_cellSNP != 'False' ? "--printSkipSNPs" : ''
+        def nproc = nproc_cellSNP != 'False' ? "--nproc ${nproc_cellSNP}" : ''
+        def refseq = refseq_cellSNP.name != 'no_refseq' ? "--refseq ${refseq_cellSNP}" : ''
+        def chrom = chrom_cellSNP != 'False' ? "--chrom ${chrom_cellSNP}" : ''
+        def cellTAG = "--cellTAG ${cellTAG_cellSNP}" 
+        def UMItag = "--UMItag ${UMItag_cellSNP}" 
+        def minCOUNT = "--minCOUNT ${minCOUNT_cellSNP}" 
+        def minMAF = "--minMAF ${minMAF_cellSNP}" 
+        def doubletGL = doubletGL_cellSNP != 'False' ? "--doubletGL" : ''
+        def inclFLAG = inclFLAG_cellSNP != 'False' ? "--inclFLAG ${inclFLAG_cellSNP}" : ''
+        def exclFLAG = exclFLAG_cellSNP != 'False' ? "--exclFLAG ${exclFLAG_cellSNP}" : ''
+        def minLEN = "--minLEN ${minLEN_cellSNP}" 
+        def minMAPQ = "--minMAPQ ${minMAPQ_cellSNP}" 
+        def maxDEPTH = "--maxDEPTH ${maxDEPTH_cellSNP}" 
+        def countORPHAN = countORPHAN_cellSNP != 'False' ? "--countORPHAN" : ''
+        def outDir = "--outDir ${outDir_cellSNP}" 
 
-    """
-    cellsnp-lite $samFile $samFileList $regionsVCF $targetsVCF $barcodeFile $sampleList $sampleIDs $genotype $gzip $printSkipSNPs $nproc $refseq $chrom $cellTAG $UMItag $minCOUNT $minMAF $doubletGL $inclFLAG $exclFLAG $minLEN $minMAPQ $maxDEPTH $countORPHAN $outDir
-    """
+        """
+        cellsnp-lite $samFile $samFileList $regionsVCF $targetsVCF $barcodeFile $sampleList $sampleIDs $genotype $gzip $printSkipSNPs $nproc $refseq $chrom $cellTAG $UMItag $minCOUNT $minMAF $doubletGL $inclFLAG $exclFLAG $minLEN $minMAPQ $maxDEPTH $countORPHAN $outDir
+        """
 }
 
 
 workflow variant_cellSNP{
-    input_samFile = channel.value(params.samFile)
-    input_samFileList = channel.fromPath(params.samFileList)
-    input_regionsVCF = channel.fromPath(params.regionsVCF)
-    input_targetsVCF =  channel.fromPath(params.targetsVCF)
-    input_barcodeFile = channel.fromPath(params.barcodeFile)
-    input_sampleList = channel.fromPath(params.sampleList)
-    input_sampleIDs = channel.value(params.sampleIDs)
-    input_genotype_cellSNP = channel.value(params.genotype_cellSNP)
-    input_gzip_cellSNP = channel.value(params.gzip_cellSNP)
-    input_printSkipSNPs = channel.value(params.printSkipSNPs)
-    input_nproc_cellSNP = channel.value(params.nproc_cellSNP)
-    input_refseq_cellSNP = channel.fromPath(params.refseq_cellSNP)
-    input_chrom = channel.value(params.chrom)
-    input_cellTAG = channel.value(params.cellTAG)
-    input_UMItag = channel.value(params.UMItag)
-    input_minCOUNT = channel.value(params.minCOUNT)
-    input_minMAF = channel.value(params.minMAF)
-    input_doubletGL = channel.value(params.doubletGL)
-    input_inclFLAG = channel.value(params.inclFLAG)
-    input_exclFLAG = channel.value(params.exclFLAG)
-    input_minLEN = channel.value(params.minLEN)
-    input_minMAPQ = channel.value(params.minMAPQ)
-    input_maxDEPTH = channel.value(params.maxDEPTH)
-    input_countORPHAN = channel.value(params.countORPHAN)
-    input_outDir_cellSNP = channel.value(params.outDir_cellSNP)
-
-    cellSNP(input_samFile, input_samFileList, input_regionsVCF, input_targetsVCF, input_barcodeFile, input_sampleList, input_sampleIDs, input_genotype_cellSNP, input_gzip_cellSNP, input_printSkipSNPs, input_nproc_cellSNP, input_refseq_cellSNP, input_chrom, input_cellTAG, input_UMItag, input_minCOUNT, input_minMAF, input_doubletGL, input_inclFLAG, input_exclFLAG, input_minLEN, input_minMAPQ, input_maxDEPTH, input_countORPHAN,input_outDir_cellSNP)
-
-
+    main:
+        samFile = channel.value(params.samFile)
+        samFileList = channel.fromPath(params.samFileList)
+        regionsVCF = channel.fromPath(params.regionsVCF)
+        targetsVCF =  channel.fromPath(params.targetsVCF)
+        barcodeFile = channel.fromPath(params.barcodeFile)
+        sampleList = channel.fromPath(params.sampleList)
+        sampleIDs = channel.value(params.sampleIDs)
+        genotype_cellSNP = channel.value(params.genotype_cellSNP)
+        gzip_cellSNP = channel.value(params.gzip_cellSNP)
+        printSkipSNPs = channel.value(params.printSkipSNPs)
+        nproc_cellSNP = channel.value(params.nproc_cellSNP)
+        refseq_cellSNP = channel.fromPath(params.refseq_cellSNP)
+        chrom = channel.value(params.chrom)
+        cellTAG = channel.value(params.cellTAG)
+        UMItag = channel.value(params.UMItag)
+        minCOUNT = channel.value(params.minCOUNT)
+        minMAF = channel.value(params.minMAF)
+        doubletGL = channel.value(params.doubletGL)
+        inclFLAG = channel.value(params.inclFLAG)
+        exclFLAG = channel.value(params.exclFLAG)
+        minLEN = channel.value(params.minLEN)
+        minMAPQ = channel.value(params.minMAPQ)
+        maxDEPTH = channel.value(params.maxDEPTH)
+        countORPHAN = channel.value(params.countORPHAN)
+        outDir_cellSNP = channel.value(params.outDir_cellSNP)
+        cellSNP(samFile, samFileList, regionsVCF, targetsVCF, barcodeFile, sampleList, sampleIDs, genotype_cellSNP, gzip_cellSNP, printSkipSNPs, nproc_cellSNP, refseq_cellSNP, chrom, cellTAG, UMItag, minCOUNT, minMAF, doubletGL, inclFLAG, exclFLAG, minLEN, minMAPQ, maxDEPTH, countORPHAN,outDir_cellSNP)
+    emit:
+        cellSNP.out
 }
+
 workflow call_variant{
 	if (params.variant_tool == "freebayes"){
 		variant_freebayes()
 	}
-    if (params.variant_tool == "cellSNP"){
+	if (params.variant_tool == "cellSNP"){
 		variant_cellSNP()
-	}
+	}        
+}
+
+
+process bcftools{
+        publishDir "$params.outdir/bcftools", mode: 'copy'
+        container 'biocontainers/bcftools:v1.9-1-deb_cv1'
+        containerOptions = "--user root"
+        echo true
+
+	input:
+		file vcf
+        output:
+		file '*.vcf'
+	script:
+	
+	"""
+	bcftools filter -i '%QUAL>30' $vcf -o filter.vcf	
+	"""
+
+}
+workflow filter_variant{
+	take:
+		vcf
+	main:
+		bcftools(vcf)
+	emit: 
+		bcftools.out
 }
 
 workflow{
-	call_variant()  
+    if (params.data_preprocess == 'True'){
+        data_preprocess()
+    }
+    def bam = params.data_preprocess == 'True'? data_preprocess.out: Channel.fromPath(params.sam)
+    def vcf = "unknown"
+    if (params.call_variant == 'True'){
+        if (params.variant_tool == "freebayes"){
+		variant_freebayes()
+                vcf = variant_freebayes.out
+    }
+	if (params.variant_tool == "cellSNP"){
+		variant_cellSNP()
+                vcf = variant_cellSNP.out
+	}       
+    }
+    else{
+        vcf = Channel.fromPath(params.vcfscSplit)
+   }
+   if (params.filter_variant == 'True'){
+       filter_variant(vcf)
+       vcf = filter_variant.out
+    }
+    if (params.demultiplex == 'True'){
+        demultiplex(bam,vcf)
+    }
 }
 
