@@ -18,7 +18,7 @@ nextflow.enable.dsl=2
         celldata = Channel.fromPath(params.celldata)
         vcf_scsplit = Channel.fromPath(params.vcfscSplit)
  def vcf = params.call_variant == 'True'? (params.variant_tool == "freebayes"? variant_freebayes.out: variant_cellSNP.out): Channel.fromPath(params.vcfscSplit)
-
+    container 'popscle'
 
 */
 
@@ -61,8 +61,6 @@ def split_input(input){
 
 process demuxlet {
     publishDir "$params.outdir/demux", mode: 'copy'
-    container 'popscle'
-
     input:
 	    file sam
         each tag_group 
@@ -485,7 +483,7 @@ process compare_parameter{
         }
 
         """
-        compareParam.R --tool $tool --file ${demux_files} 
+        compareParam.R --tool $tool --file ${demux_files} --sampleid "293t_RTG,jurkat"
         """
 }
 

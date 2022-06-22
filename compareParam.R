@@ -171,12 +171,17 @@ num_stat_vireo <-function(vireo_list){
   
 }
 
-num_stat_souporcell <-function(souporcell_list){
+num_stat_souporcell <-function(souporcell_list, ids){
   result_df = as.data.frame(matrix(nrow= length(souporcell_list), ncol=4))
   colnames(result_df) = c("Trial","singlets","doublets","ambigous/unassigned")
   
   f1_cluster = fread(paste(souporcell_list[1],"/clusters.tsv",sep = ""))
   f1_cluster[f1_cluster$status == "doublet",]$assignment = "doublet"
+  index = 1
+  for (id in ids){
+    f1_cluster[f1_cluster$assignment == (index-1),]$assignment = id
+    index = index + 1
+  } 
   
   #f1_ambientRNA = fread(paste(souporcell_list[1],"/ambient_rna.txt",sep = ""))
   
@@ -200,6 +205,11 @@ num_stat_souporcell <-function(souporcell_list){
   for (f in souporcell_list){
     cluster = fread(paste(f,"/clusters.tsv",sep = ""))
     cluster[cluster$status == "doublet",]$assignment = "doublet"
+    index = 1
+    for (id in ids){
+      cluster[cluster$assignment == (index -1),]$assignment = id
+      index = index + 1
+    } 
     #ambientRNA = fread(paste(f,"/ambient_rna.txt",sep = ""))
     
     num_sin = nrow(cluster[cluster$status=="singlet",])
@@ -331,10 +341,15 @@ parser <- ArgumentParser()
 
 parser$add_argument("--tool", default="demuxlet", help="demultiplexing tool [default %(default)s]")
 parser$add_argument("--file", nargs=1, help="demultiplexing output file")
+parser$add_argument("--sampleid", nargs=1, help="sample ids")
+
 
 args <- parser$parse_args()
 file <- args$file
 tool <- args$tool
+ids <- args$sampleid
+
+ids <- strsplit(ids, ',',fixed = TRUE)[[1]]
 
 demux_list = list()
 vireo_list = list()
@@ -356,7 +371,7 @@ if (tool != "none"){
   }
   else if (tool == "souporcell"){
     souporcell_list = str_subset(file,'soup')
-    num_stat_souporcell(souporcell_list)
+    num_stat_souporcell(souporcell_list,ids)
     
   }
   else if (tool == "scSplit"){
@@ -386,7 +401,7 @@ if (tool != "none"){
   }
   
   if (length(souporcell_list) != 0){
-    num_stat_souporcell(souporcell_list)
+    num_stat_souporcell(souporcell_list,ids)
   }else{
     print("No souporcell output found!")
   }
